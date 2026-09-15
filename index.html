@@ -43,7 +43,10 @@
     .avatar-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
     .avatar-option { font-size: 26px; cursor: pointer; padding: 4px 8px; border: 2px solid transparent; border-radius: 8px; display: inline-block; }
     .avatar-option.selected { border-color: var(--primary); background: #e0e7ff; }
-    .char-icon { font-size: 36px; line-height: 1; margin-bottom: 2px; }
+    
+    /* 戦闘キャラ表示枠 (エフェクト基準点) */
+    .char-box { position: relative; width: 48%; display: inline-block; }
+    .char-icon { font-size: 36px; line-height: 1; margin-bottom: 2px; position: relative; z-index: 1; }
     
     .room-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin: 10px 0; border: 1px solid #e2e8f0; }
 
@@ -56,6 +59,119 @@
     .record-badge { font-size: 13px; color: #475569; font-weight: bold; background: #e2e8f0; padding: 4px 10px; border-radius: 12px; display: inline-block; margin-top: 4px; }
     
     .timer-header { display: flex; justify-content: space-between; background: #1e293b; color: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
+
+    /* ==========================================
+       ★ バトル用アニメーション＆エフェクト CSS
+       ========================================== */
+    
+    /* 被ダメージ・揺れアニメーション */
+    .fx-shake { animation: shake 0.4s ease-in-out; }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-12px); }
+      40% { transform: translateX(12px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+      100% { transform: translateX(0); }
+    }
+
+    /* エフェクトオーバーレイのレイアウト */
+    .fx-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* 1. 攻撃エフェクト（斬撃） */
+    .fx-slash {
+      width: 80px; height: 80px;
+      font-size: 48px;
+      opacity: 0;
+      transform: scale(0.2) rotate(-45deg);
+    }
+    .fx-slash.active {
+      animation: slashAnim 0.4s ease-out forwards;
+    }
+    @keyframes slashAnim {
+      0% { opacity: 1; transform: scale(0.3) rotate(-45deg); }
+      50% { opacity: 1; transform: scale(1.4) rotate(15deg); }
+      100% { opacity: 0; transform: scale(1.6) rotate(30deg); }
+    }
+
+    /* 2. 回復エフェクト（キラキラ＆光） */
+    .fx-heal {
+      font-size: 40px;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    .fx-heal.active {
+      animation: healAnim 0.7s ease-out forwards;
+    }
+    @keyframes healAnim {
+      0% { opacity: 0; transform: translateY(15px) scale(0.5); }
+      50% { opacity: 1; transform: translateY(-10px) scale(1.3); }
+      100% { opacity: 0; transform: translateY(-30px) scale(1); }
+    }
+
+    /* 3. ためるエフェクト（炎オーラ） */
+    .fx-charge {
+      font-size: 45px;
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    .fx-charge.active {
+      animation: chargeAnim 0.6s ease-out forwards;
+    }
+    @keyframes chargeAnim {
+      0% { opacity: 0; transform: scale(0.4); }
+      50% { opacity: 1; transform: scale(1.4); }
+      100% { opacity: 0; transform: scale(1.8); }
+    }
+
+    /* 4. まもるエフェクト（バリア） */
+    .fx-guard {
+      width: 50px; height: 50px;
+      border: 4px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.3);
+      border-radius: 50%;
+      box-shadow: 0 0 15px #38bdf8;
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    .fx-guard.active {
+      animation: guardAnim 0.6s ease-out forwards;
+    }
+    @keyframes guardAnim {
+      0% { opacity: 0; transform: scale(0.3); }
+      40% { opacity: 0.9; transform: scale(1.2); }
+      70% { opacity: 0.9; transform: scale(1.0); }
+      100% { opacity: 0; transform: scale(1.3); }
+    }
+
+    /* ポップアップテキスト（ダメージ/回復量の数値表示） */
+    .pop-text {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 15;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .pop-text.active {
+      animation: popAnim 0.8s ease-out forwards;
+    }
+    @keyframes popAnim {
+      0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
+      30% { transform: translate(-50%, -15px) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -30px) scale(1); }
+    }
   </style>
 
   <!-- Firebase SDK の読み込み -->
@@ -76,7 +192,6 @@
         </div>
         <div>
           <label><strong>キャラ選択: </strong></label>
-          <!-- キャラクター一覧（増量版） -->
           <div class="avatar-grid">
             <span class="avatar-option selected" onclick="selectAvatar('🧙‍♂️')">🧙‍♂️</span>
             <span class="avatar-option" onclick="selectAvatar('⚔️')">⚔️</span>
@@ -93,7 +208,6 @@
 
       <p style="margin-bottom: 5px;">所持ポイント: <strong id="home-pt" style="font-size:24px; color:var(--primary);">0</strong> PT</p>
       
-      <!-- 対人戦 成績バッジ -->
       <div class="record-badge">🏆 対人戦: <span id="home-pvp-wins">0</span>勝 <span id="home-pvp-losses">0</span>敗 <span id="home-pvp-draws">0</span>分</div>
 
       <div style="background:#f8fafc; padding:12px; border-radius:8px; margin: 15px 0; text-align:left;">
@@ -131,7 +245,7 @@
       <button class="secondary" onclick="showScreen('screen-home')">ホームへ戻る</button>
     </div>
 
-    <!-- 2-1. トレーニング準備（レベル選択） -->
+    <!-- 2-1. トレーニング準備 -->
     <div id="screen-training-ready" class="screen">
       <h2>⏱️ 30秒トレーニング</h2>
       <p style="font-size: 14px; color: #475569;">難易度を選択してください（1問あたりの獲得PTが変わります）</p>
@@ -230,7 +344,6 @@
       <h2>⚔️ 対戦モード</h2>
       
       <div id="enemy-select-area">
-        <!-- 対人戦 成績バッジ -->
         <div style="margin-bottom: 10px;">
           <span class="record-badge">🏆 対人戦戦績: <span id="battle-pvp-wins">0</span>勝 <span id="battle-pvp-losses">0</span>敗 <span id="battle-pvp-draws">0</span>分</span>
         </div>
@@ -262,21 +375,27 @@
 
       <div id="battle-area" style="display:none; margin-top:15px;">
         
-        <!-- 戦闘タイマー＆技選択タイマー表示領域 -->
         <div class="timer-header">
           <span>⏱️ 戦闘制限: <span id="match-timer-text" style="color:#fa8c16;">3:00</span></span>
           <span>⏳ 選択時間: <span id="turn-timer-text" style="color:#f5222d;">20</span>秒</span>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-          <div style="width:48%;">
+          <!-- プレイヤー枠 -->
+          <div id="p-box" class="char-box">
+            <div id="p-pop" class="pop-text"></div>
+            <div id="p-fx" class="fx-overlay"></div>
             <div id="p-icon" class="char-icon">🧙‍♂️</div>
             <strong id="p-display-name">勇者</strong>
             <div class="hp-bar"><div id="p-hp-bar" class="hp-fill" style="width:100%;"></div></div>
             <span id="p-hp-text">50/50</span>
             <div id="p-status-buff" style="font-size:11px; color:#eab308; font-weight:bold; height:16px;"></div>
           </div>
-          <div style="width:48%;">
+
+          <!-- エネミー枠 -->
+          <div id="e-box" class="char-box">
+            <div id="e-pop" class="pop-text"></div>
+            <div id="e-fx" class="fx-overlay"></div>
             <div id="e-icon" class="char-icon">🐉</div>
             <strong id="e-name">対戦相手</strong>
             <div class="hp-bar"><div id="e-hp-bar" class="hp-fill" style="width:100%;"></div></div>
@@ -375,7 +494,6 @@
   let inBattle = false;
   let isCpuBattle = false;
 
-  // オンライン通信およびタイマー管理用
   let currentRoomCode = null;
   let myRole = null;
   let roomRef = null;
@@ -386,9 +504,49 @@
   let turnTimeLeft = 20;
 
   // ==========================================
-  //  1. 統合データ保存＆ロード処理
+  //  ★ エフェクト再生関数
   // ==========================================
+  function playEffect(targetSide, effectType, popText = '', popColor = '#ef4444') {
+    const boxEl = document.getElementById(targetSide === 'player' ? 'p-box' : 'e-box');
+    const fxOverlay = document.getElementById(targetSide === 'player' ? 'p-fx' : 'e-fx');
+    const popEl = document.getElementById(targetSide === 'player' ? 'p-pop' : 'e-pop');
 
+    if (!fxOverlay || !boxEl) return;
+
+    // クラスのリセット
+    fxOverlay.innerHTML = '';
+    boxEl.classList.remove('fx-shake');
+
+    // 1. 被ダメージで画面揺れ
+    if (effectType === 'shake') {
+      void boxEl.offsetWidth; // リフロー強制
+      boxEl.classList.add('fx-shake');
+    }
+
+    // 2. エフェクト描画
+    if (effectType === 'slash') {
+      fxOverlay.innerHTML = '<div class="fx-slash active">⚔️</div>';
+    } else if (effectType === 'heal') {
+      fxOverlay.innerHTML = '<div class="fx-heal active">✨</div>';
+    } else if (effectType === 'charge') {
+      fxOverlay.innerHTML = '<div class="fx-charge active">🔥</div>';
+    } else if (effectType === 'guard') {
+      fxOverlay.innerHTML = '<div class="fx-guard active"></div>';
+    }
+
+    // 3. 数字のポップアップ表示
+    if (popText !== '' && popEl) {
+      popEl.innerText = popText;
+      popEl.style.color = popColor;
+      popEl.classList.remove('active');
+      void popEl.offsetWidth; // リフロー
+      popEl.classList.add('active');
+    }
+  }
+
+  // ==========================================
+  //  データ保存・ロード
+  // ==========================================
   function saveData() {
     const saveDataObj = {
       playerName: playerName,
@@ -443,7 +601,6 @@
     }
   }
 
-  // ★重複チェック付きのクラウドID連携機能
   function registerCloudId() {
     const userId = document.getElementById('cloud-id-input').value.trim();
     const msg = document.getElementById('save-msg');
@@ -460,7 +617,6 @@
       return;
     }
 
-    // 既に連携済みの自分のIDを再設定しようとしている場合はそのまま許可
     const currentCloudId = localStorage.getItem('kisomon_cloud_id');
     if (currentCloudId === userId) {
       saveData();
@@ -469,18 +625,15 @@
       return;
     }
 
-    // 重複チェック：すでにデータベースに存在するIDか確認
     msg.style.color = '#64748b';
     msg.innerText = '🔍 IDの重複を確認中...';
 
     db.ref('users/' + userId).once('value')
       .then(snapshot => {
         if (snapshot.exists()) {
-          // すでにデータが存在している場合ははじく
           msg.style.color = '#ef4444';
           msg.innerText = '❌ このIDは既に使われています。別のIDを指定してください。';
         } else {
-          // 新規IDとして登録・保存
           localStorage.setItem('kisomon_cloud_id', userId);
           saveData();
 
@@ -541,10 +694,7 @@
       });
   }
 
-  // ==========================================
-  //  基本操作・UI連動
-  // ==========================================
-
+  // UI管理
   function selectAvatar(icon, doSave = true) {
     playerAvatar = icon;
     document.querySelectorAll('.avatar-option').forEach(el => {
@@ -592,16 +742,13 @@
     document.getElementById('val-spd').innerText = player.spd;
   }
 
-  // --- トレーニング機能 ---
+  // トレーニング
   function selectTrainingLevel(lvl) {
     selectedLevel = lvl;
     for (let i = 1; i <= 3; i++) {
       const btn = document.getElementById(`lvl-btn-${i}`);
-      if (i === lvl) {
-        btn.classList.add('selected');
-      } else {
-        btn.classList.remove('selected');
-      }
+      if (i === lvl) btn.classList.add('selected');
+      else btn.classList.remove('selected');
     }
   }
 
@@ -629,14 +776,8 @@
 
   function get1Digit() { return Math.floor(Math.random() * 9) + 1; }
   function get2Digit() { return Math.floor(Math.random() * 90) + 10; }
-  function getSigned1Digit() {
-    let val = get1Digit();
-    return Math.random() < 0.5 ? val : -val;
-  }
-  function getSigned2Digit() {
-    let val = get2Digit();
-    return Math.random() < 0.5 ? val : -val;
-  }
+  function getSigned1Digit() { let val = get1Digit(); return Math.random() < 0.5 ? val : -val; }
+  function getSigned2Digit() { let val = get2Digit(); return Math.random() < 0.5 ? val : -val; }
 
   function generateProblem() {
     const ops = ['+', '-', '*'];
@@ -646,53 +787,32 @@
     const formatNum = n => n < 0 ? `(${n})` : n;
 
     if (selectedLevel === 1) {
-      num1 = get1Digit();
-      num2 = get1Digit();
-    } 
-    else if (selectedLevel === 2) {
+      num1 = get1Digit(); num2 = get1Digit();
+    } else if (selectedLevel === 2) {
       if (op === '*') {
         const pattern = Math.floor(Math.random() * 3);
-        if (pattern === 0) {
-          num1 = get1Digit(); num2 = get1Digit();
-        } else if (pattern === 1) {
-          num1 = get1Digit(); num2 = get2Digit();
-        } else {
-          num1 = get2Digit(); num2 = get1Digit();
-        }
+        if (pattern === 0) { num1 = get1Digit(); num2 = get1Digit(); }
+        else if (pattern === 1) { num1 = get1Digit(); num2 = get2Digit(); }
+        else { num1 = get2Digit(); num2 = get1Digit(); }
       } else {
         const pattern = Math.floor(Math.random() * 4);
-        if (pattern === 0) {
-          num1 = get2Digit(); num2 = get2Digit();
-        } else if (pattern === 1) {
-          num1 = get1Digit(); num2 = get2Digit();
-        } else if (pattern === 2) {
-          num1 = get2Digit(); num2 = get1Digit();
-        } else {
-          num1 = get1Digit(); num2 = get1Digit();
-        }
+        if (pattern === 0) { num1 = get2Digit(); num2 = get2Digit(); }
+        else if (pattern === 1) { num1 = get1Digit(); num2 = get2Digit(); }
+        else if (pattern === 2) { num1 = get2Digit(); num2 = get1Digit(); }
+        else { num1 = get1Digit(); num2 = get1Digit(); }
       }
-    } 
-    else if (selectedLevel === 3) {
+    } else if (selectedLevel === 3) {
       if (op === '*') {
         const pattern = Math.floor(Math.random() * 3);
-        if (pattern === 0) {
-          num1 = getSigned1Digit(); num2 = getSigned1Digit();
-        } else if (pattern === 1) {
-          num1 = getSigned1Digit(); num2 = getSigned2Digit();
-        } else {
-          num1 = getSigned2Digit(); num2 = getSigned1Digit();
-        }
+        if (pattern === 0) { num1 = getSigned1Digit(); num2 = getSigned1Digit(); }
+        else if (pattern === 1) { num1 = getSigned1Digit(); num2 = getSigned2Digit(); }
+        else { num1 = getSigned2Digit(); num2 = getSigned1Digit(); }
       } else {
         const pattern = Math.floor(Math.random() * 4);
-        if (pattern === 0) {
-          num1 = getSigned2Digit(); num2 = getSigned2Digit();
-        } else if (pattern === 1) {
-          num1 = getSigned1Digit(); num2 = getSigned2Digit();
-        } else if (pattern === 2) {
-          num1 = getSigned2Digit(); num2 = getSigned1Digit();
-        } else {
-          num1 = getSigned1Digit(); num2 = getSigned1Digit();
-        }
+        if (pattern === 0) { num1 = getSigned2Digit(); num2 = getSigned2Digit(); }
+        else if (pattern === 1) { num1 = getSigned1Digit(); num2 = getSigned2Digit(); }
+        else if (pattern === 2) { num1 = getSigned2Digit(); num2 = getSigned1Digit(); }
+        else { num1 = getSigned1Digit(); num2 = getSigned1Digit(); }
       }
     }
 
@@ -740,7 +860,7 @@
     showScreen('screen-training-fb');
   }
 
-  // --- ステータス強化機能 ---
+  // ステータス強化
   function addStat(type) {
     if (points < 1) return;
     points -= 1;
@@ -784,20 +904,15 @@
     updateUI();
   }
 
-  // ==========================================
-  //  タイマー制御
-  // ==========================================
-
+  // タイマー制御
   function startBattleTimers() {
     stopBattleTimers();
-
     matchTimeLeft = 180;
     updateMatchTimerDisplay();
 
     matchTimerInterval = setInterval(() => {
       matchTimeLeft--;
       updateMatchTimerDisplay();
-
       if (matchTimeLeft <= 0) {
         stopBattleTimers();
         handleMatchTimeout();
@@ -815,7 +930,6 @@
     turnTimerInterval = setInterval(() => {
       turnTimeLeft--;
       document.getElementById('turn-timer-text').innerText = turnTimeLeft;
-
       if (turnTimeLeft <= 0) {
         clearInterval(turnTimerInterval);
         autoChooseRandomAction();
@@ -836,7 +950,6 @@
 
   function autoChooseRandomAction() {
     if (!inBattle) return;
-
     const availableActions = ['attack', 'heal'];
     if (player.lastAction !== 'charge') availableActions.push('charge');
     if (player.lastAction !== 'guard') availableActions.push('guard');
@@ -848,7 +961,6 @@
 
   function handleMatchTimeout() {
     if (!inBattle) return;
-
     logMsg('⏱️ <strong>3分経過！試合終了です！</strong>');
     setAllButtonsDisabled(true);
 
@@ -866,7 +978,7 @@
     }, 1500);
   }
 
-  // --- CPU対戦＆オンライン対戦 ---
+  // CPU対戦＆オンライン対戦
   function generateCpuStats(level) {
     let pts = Math.max(1, level);
     let hpPts = Math.floor(pts * 0.25);
@@ -1106,22 +1218,22 @@
     else playerFirst = player.spd >= enemy.spd;
 
     if (playerFirst) {
-      processAction(player, enemy, pCmd, playerName);
+      processAction(player, enemy, pCmd, playerName, 'player');
       if (enemy.hp > 0) {
         setTimeout(() => {
-          processAction(enemy, player, cpuCmd, enemy.name);
+          processAction(enemy, player, cpuCmd, enemy.name, 'enemy');
           endTurn();
-        }, 800);
+        }, 1000);
       } else {
         endTurn();
       }
     } else {
-      processAction(enemy, player, cpuCmd, enemy.name);
+      processAction(enemy, player, cpuCmd, enemy.name, 'enemy');
       if (player.hp > 0) {
         setTimeout(() => {
-          processAction(player, enemy, pCmd, playerName);
+          processAction(player, enemy, pCmd, playerName, 'player');
           endTurn();
-        }, 800);
+        }, 1000);
       } else {
         endTurn();
       }
@@ -1156,41 +1268,47 @@
     else playerFirst = player.spd >= enemy.spd;
 
     if (playerFirst) {
-      processAction(player, enemy, myCmd, playerName);
+      processAction(player, enemy, myCmd, playerName, 'player');
       if (enemy.hp > 0) {
         setTimeout(() => {
-          processAction(enemy, player, oppCmd, enemy.name);
+          processAction(enemy, player, oppCmd, enemy.name, 'enemy');
           endTurn();
-        }, 800);
+        }, 1000);
       } else {
         endTurn();
       }
     } else {
-      processAction(enemy, player, oppCmd, enemy.name);
+      processAction(enemy, player, oppCmd, enemy.name, 'enemy');
       if (player.hp > 0) {
         setTimeout(() => {
-          processAction(player, enemy, myCmd, playerName);
+          processAction(player, enemy, myCmd, playerName, 'player');
           endTurn();
-        }, 800);
+        }, 1000);
       } else {
         endTurn();
       }
     }
   }
 
-  function processAction(actor, target, actionName, actorLabel) {
+  // ★ エフェクト連動付き行動処理
+  function processAction(actor, target, actionName, actorLabel, actorSide) {
+    const targetSide = (actorSide === 'player') ? 'enemy' : 'player';
+
     if (actionName === 'guard') {
       actor.isGuarding = true;
       logMsg(`${actorLabel}は **まもる** の態勢に入った！`);
+      playEffect(actorSide, 'guard');
     } 
     else if (actionName === 'charge') {
       actor.isCharged = true;
       logMsg(`${actorLabel}は **力を溜めた**！`);
+      playEffect(actorSide, 'charge');
     } 
     else if (actionName === 'heal') {
       const healAmt = Math.max(10, Math.floor(actor.maxHp * 0.2));
       actor.hp = Math.min(actor.maxHp, actor.hp + healAmt);
       logMsg(`${actorLabel}は **かいふく** を使った！ 体力が ${healAmt} 回復した！`);
+      playEffect(actorSide, 'heal', `+${healAmt}`, '#22c55e');
     }
     else if (actionName === 'attack') {
       let baseAtk = actor.atk;
@@ -1201,10 +1319,17 @@
 
       if (target.isGuarding) {
         logMsg(`${actorLabel}の攻撃！...しかし相手は **まもって** いる！`);
+        playEffect(targetSide, 'guard');
       } else {
         const damage = Math.max(1, baseAtk - target.def);
         logMsg(`${actorLabel}の **こうげき**！ ${damage} のダメージ！`);
         target.hp = Math.max(0, target.hp - damage);
+        
+        // 攻撃側アニメーション＋被ダメージ側の揺れ
+        playEffect(targetSide, 'slash', `-${damage}`, '#ef4444');
+        setTimeout(() => {
+          playEffect(targetSide, 'shake');
+        }, 100);
       }
     }
     
@@ -1243,13 +1368,9 @@
     setAllButtonsDisabled(true);
 
     if (!isCpuBattle) {
-      if (result === 'win') {
-        pvpWins++;
-      } else if (result === 'lose') {
-        pvpLosses++;
-      } else if (result === 'draw') {
-        pvpDraws++;
-      }
+      if (result === 'win') pvpWins++;
+      else if (result === 'lose') pvpLosses++;
+      else if (result === 'draw') pvpDraws++;
       saveData();
     }
 
@@ -1310,7 +1431,7 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  // 起動時の初期化処理
+  // 初期化
   window.onload = function() {
     loadLocal();
     
