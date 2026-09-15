@@ -118,7 +118,7 @@
       </p>
 
       <div class="room-box">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px;">引き継ぎ・連携用ID (半角英数字・ハイフン・アンダースコア)</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">引き継ぎ・連携用ID (12桁以内 / 英数字・-・_)</label>
         <input type="text" id="cloud-id-input" placeholder="例: user-1234" maxlength="12" style="width: 200px;">
         <div style="display: flex; justify-content: center; gap: 8px; margin-top: 10px;">
           <button class="success" onclick="registerCloudId()">🔗 IDを連携（自動保存）</button>
@@ -443,6 +443,7 @@
     }
   }
 
+  // ★重複チェック付きのクラウドID連携機能
   function registerCloudId() {
     const userId = document.getElementById('cloud-id-input').value.trim();
     const msg = document.getElementById('save-msg');
@@ -459,11 +460,38 @@
       return;
     }
 
-    localStorage.setItem('kisomon_cloud_id', userId);
-    saveData();
+    // 既に連携済みの自分のIDを再設定しようとしている場合はそのまま許可
+    const currentCloudId = localStorage.getItem('kisomon_cloud_id');
+    if (currentCloudId === userId) {
+      saveData();
+      msg.style.color = '#22c55e';
+      msg.innerText = `✅ 既にID「${userId}」と連携されています。データを更新しました。`;
+      return;
+    }
 
-    msg.style.color = '#22c55e';
-    msg.innerText = `✅ ID「${userId}」と連携しました！今後は自動でクラウド保存されます。`;
+    // 重複チェック：すでにデータベースに存在するIDか確認
+    msg.style.color = '#64748b';
+    msg.innerText = '🔍 IDの重複を確認中...';
+
+    db.ref('users/' + userId).once('value')
+      .then(snapshot => {
+        if (snapshot.exists()) {
+          // すでにデータが存在している場合ははじく
+          msg.style.color = '#ef4444';
+          msg.innerText = '❌ このIDは既に使われています。別のIDを指定してください。';
+        } else {
+          // 新規IDとして登録・保存
+          localStorage.setItem('kisomon_cloud_id', userId);
+          saveData();
+
+          msg.style.color = '#22c55e';
+          msg.innerText = `✅ ID「${userId}」と連携しました！今後は自動でクラウド保存されます。`;
+        }
+      })
+      .catch(err => {
+        msg.style.color = '#ef4444';
+        msg.innerText = '❌ エラーが発生しました: ' + err.message;
+      });
   }
 
   function loadFromCloud() {
