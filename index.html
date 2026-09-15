@@ -244,7 +244,7 @@
         </div>
         
         <div class="room-box">
-          <input type="text" id="join-room-code" placeholder="4桁コード" maxlength="4" style="width: 110px;">
+          <input type="text" id="join-room-code" placeholder="8桁コード" maxlength="8" style="width: 140px;">
           <button onclick="joinRoom()">🔗 部屋に入る</button>
         </div>
         
@@ -929,7 +929,7 @@
 
   function createRoom() {
     isCpuBattle = false;
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const code = Math.floor(10000000 + Math.random() * 90000000).toString();
     currentRoomCode = code;
     myRole = 'host';
     roomRef = db.ref('rooms/' + code);
@@ -950,7 +950,7 @@
   function joinRoom() {
     isCpuBattle = false;
     const code = document.getElementById('join-room-code').value.trim();
-    if (code.length !== 4) return alert('4桁の部屋コードを入力してください');
+    if (code.length !== 8) return alert('8桁の部屋コードを入力してください');
 
     currentRoomCode = code;
     myRole = 'guest';
