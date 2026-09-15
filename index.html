@@ -40,7 +40,8 @@
     
     .timer-display { font-size: 32px; font-weight: bold; color: #ef4444; margin: 10px 0; }
     
-    .avatar-option { font-size: 28px; cursor: pointer; padding: 6px 10px; border: 2px solid transparent; border-radius: 8px; display: inline-block; }
+    .avatar-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
+    .avatar-option { font-size: 26px; cursor: pointer; padding: 4px 8px; border: 2px solid transparent; border-radius: 8px; display: inline-block; }
     .avatar-option.selected { border-color: var(--primary); background: #e0e7ff; }
     .char-icon { font-size: 36px; line-height: 1; margin-bottom: 2px; }
     
@@ -74,11 +75,19 @@
           <input type="text" id="player-name-input" value="勇者" maxlength="8" onchange="updatePlayerInfo()">
         </div>
         <div>
-          <label><strong>キャラ: </strong></label>
-          <span class="avatar-option selected" onclick="selectAvatar('🧙‍♂️')">🧙‍♂️</span>
-          <span class="avatar-option" onclick="selectAvatar('⚔️')">⚔️</span>
-          <span class="avatar-option" onclick="selectAvatar('🤖')">🤖</span>
-          <span class="avatar-option" onclick="selectAvatar('🐱')">🐱</span>
+          <label><strong>キャラ選択: </strong></label>
+          <!-- キャラクター一覧（増量版） -->
+          <div class="avatar-grid">
+            <span class="avatar-option selected" onclick="selectAvatar('🧙‍♂️')">🧙‍♂️</span>
+            <span class="avatar-option" onclick="selectAvatar('⚔️')">⚔️</span>
+            <span class="avatar-option" onclick="selectAvatar('🥷')">🥷</span>
+            <span class="avatar-option" onclick="selectAvatar('🧙‍♀️')">🧙‍♀️</span>
+            <span class="avatar-option" onclick="selectAvatar('😈')">😈</span>
+            <span class="avatar-option" onclick="selectAvatar('🤖')">🤖</span>
+            <span class="avatar-option" onclick="selectAvatar('🐱')">🐱</span>
+            <span class="avatar-option" onclick="selectAvatar('🐶')">🐶</span>
+            <span class="avatar-option" onclick="selectAvatar('🐲')">🐲</span>
+          </div>
         </div>
       </div>
 
@@ -346,9 +355,9 @@
 
   // 基本ゲーム変数
   let points = 0;
-  let pvpWins = 0;   // 対人戦 勝利数
-  let pvpLosses = 0; // 対人戦 敗北数
-  let pvpDraws = 0;  // 対人戦 引き分け数
+  let pvpWins = 0;
+  let pvpLosses = 0;
+  let pvpDraws = 0;
 
   let currentAns = 0;
   let timerInterval = null;
@@ -372,9 +381,9 @@
   let roomRef = null;
 
   let matchTimerInterval = null;
-  let matchTimeLeft = 180; // 3分 (180秒)
+  let matchTimeLeft = 180;
   let turnTimerInterval = null;
-  let turnTimeLeft = 20;   // 20秒
+  let turnTimeLeft = 20;
 
   // ==========================================
   //  1. 統合データ保存＆ロード処理
@@ -511,7 +520,7 @@
   function selectAvatar(icon, doSave = true) {
     playerAvatar = icon;
     document.querySelectorAll('.avatar-option').forEach(el => {
-      el.classList.toggle('selected', el.innerText === icon);
+      el.classList.toggle('selected', el.innerText.trim() === icon.trim());
     });
     document.getElementById('p-icon').innerText = playerAvatar;
     if (doSave) saveData();
@@ -590,7 +599,6 @@
     }, 1000);
   }
 
-  // 数値生成ヘルパー関数
   function get1Digit() { return Math.floor(Math.random() * 9) + 1; }
   function get2Digit() { return Math.floor(Math.random() * 90) + 10; }
   function getSigned1Digit() {
@@ -610,14 +618,11 @@
     const formatNum = n => n < 0 ? `(${n})` : n;
 
     if (selectedLevel === 1) {
-      // レベル1: 1桁と1桁
       num1 = get1Digit();
       num2 = get1Digit();
     } 
     else if (selectedLevel === 2) {
-      // レベル2
       if (op === '*') {
-        // かけ算: 1桁と1桁、1桁と2桁がランダム
         const pattern = Math.floor(Math.random() * 3);
         if (pattern === 0) {
           num1 = get1Digit(); num2 = get1Digit();
@@ -627,7 +632,6 @@
           num1 = get2Digit(); num2 = get1Digit();
         }
       } else {
-        // 足し算・引き算: 2桁と2桁、1桁と2桁、1桁と1桁がランダム
         const pattern = Math.floor(Math.random() * 4);
         if (pattern === 0) {
           num1 = get2Digit(); num2 = get2Digit();
@@ -641,7 +645,6 @@
       }
     } 
     else if (selectedLevel === 3) {
-      // レベル3: 正負の数（正負それぞれの桁数パターンをランダム指定）
       if (op === '*') {
         const pattern = Math.floor(Math.random() * 3);
         if (pattern === 0) {
@@ -709,7 +712,7 @@
     showScreen('screen-training-fb');
   }
 
-  // --- ステータス強化機能 (すべて 1PT で +1) ---
+  // --- ステータス強化機能 ---
   function addStat(type) {
     if (points < 1) return;
     points -= 1;
@@ -754,13 +757,12 @@
   }
 
   // ==========================================
-  //  タイマー制御（全体3分 / ターン20秒）
+  //  タイマー制御
   // ==========================================
 
   function startBattleTimers() {
     stopBattleTimers();
 
-    // 1. 全体タイマー (180秒 = 3分)
     matchTimeLeft = 180;
     updateMatchTimerDisplay();
 
@@ -774,7 +776,6 @@
       }
     }, 1000);
 
-    // 2. 最初のターンタイマーを開始
     startTurnTimer();
   }
 
@@ -805,7 +806,6 @@
     document.getElementById('match-timer-text').innerText = `${min}:${sec < 10 ? '0' : ''}${sec}`;
   }
 
-  // 20秒経過時の自動技選択（使用不可のものを除外してランダム選択）
   function autoChooseRandomAction() {
     if (!inBattle) return;
 
@@ -818,7 +818,6 @@
     playerAction(randomAction);
   }
 
-  // 3分経過時の勝敗判定
   function handleMatchTimeout() {
     if (!inBattle) return;
 
@@ -833,7 +832,6 @@
         logMsg(`残りHPで下回った... (${player.hp} vs ${enemy.hp})`);
         finishBattle('lose');
       } else {
-        // 引き分け処理
         logMsg(`HPが同じため引き分け！ (${player.hp} vs ${enemy.hp})`);
         finishBattle('draw');
       }
@@ -1054,7 +1052,7 @@
 
   function playerAction(pAction) {
     if (!inBattle) return;
-    clearInterval(turnTimerInterval); // 技を選んだので20秒タイマー停止
+    clearInterval(turnTimerInterval);
     setAllButtonsDisabled(true);
 
     if (isCpuBattle) {
@@ -1198,7 +1196,7 @@
     } else {
       turnCount++;
       updateCmdButtons();
-      startTurnTimer(); // 次のターンの20秒タイマー開始
+      startTurnTimer();
     }
   }
 
@@ -1216,7 +1214,6 @@
     stopBattleTimers();
     setAllButtonsDisabled(true);
 
-    // 対人戦の場合のみ、勝敗・引き分け数をカウントして保存
     if (!isCpuBattle) {
       if (result === 'win') {
         pvpWins++;
@@ -1237,7 +1234,6 @@
         document.getElementById('lose-enemy-name').innerText = enemy.name;
         showScreen('screen-lose');
       } else {
-        // 引き分け（Draw）の場合はアラートを表示してホームに戻る
         alert('時間切れ（引き分け）です。対戦成績に引き分けが記録されました。');
         showScreen('screen-home');
       }
