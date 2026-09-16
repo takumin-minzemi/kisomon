@@ -165,6 +165,7 @@
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -457,6 +458,23 @@
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
+
+  // Firebase Authentication の初期化
+  const auth = firebase.auth();
+
+  // ページ読み込み時に自動で匿名ログインを実行
+  auth.signInAnonymously().catch((error) => {
+    console.error("匿名認証エラー:", error);
+  });
+
+  // ログイン状態の監視
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      console.log("匿名ログイン成功! UID:", user.uid);
+      // ログイン成功後にデータの読み込みやオンライン対戦を開始できます
+    }
+  });
+
   const db = firebase.database();
 
   let points = 0;
