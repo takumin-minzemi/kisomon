@@ -44,7 +44,7 @@
     .avatar-option { font-size: 26px; cursor: pointer; padding: 4px 8px; border: 2px solid transparent; border-radius: 8px; display: inline-block; }
     .avatar-option.selected { border-color: var(--primary); background: #e0e7ff; }
     
-    /* 戦闘キャラ表示枠 (エフェクト基準点) */
+    /* 戦闘キャラ表示枠 */
     .char-box { position: relative; width: 48%; display: inline-block; }
     .char-icon { font-size: 36px; line-height: 1; margin-bottom: 2px; position: relative; z-index: 1; }
     
@@ -60,11 +60,7 @@
     
     .timer-header { display: flex; justify-content: space-between; background: #1e293b; color: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
 
-    /* ==========================================
-       ★ バトル用アニメーション＆エフェクト CSS
-       ========================================== */
-    
-    /* 被ダメージ・揺れアニメーション */
+    /* アニメーション & エフェクト CSS */
     .fx-shake { animation: shake 0.4s ease-in-out; }
     @keyframes shake {
       0% { transform: translateX(0); }
@@ -75,7 +71,6 @@
       100% { transform: translateX(0); }
     }
 
-    /* エフェクトオーバーレイのレイアウト */
     .fx-overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -86,7 +81,6 @@
       z-index: 10;
     }
 
-    /* 1. 攻撃エフェクト（斬撃） */
     .fx-slash {
       width: 80px; height: 80px;
       font-size: 48px;
@@ -102,7 +96,6 @@
       100% { opacity: 0; transform: scale(1.6) rotate(30deg); }
     }
 
-    /* 2. 回復エフェクト（キラキラ＆光） */
     .fx-heal {
       font-size: 40px;
       opacity: 0;
@@ -117,7 +110,6 @@
       100% { opacity: 0; transform: translateY(-30px) scale(1); }
     }
 
-    /* 3. ためるエフェクト（炎オーラ） */
     .fx-charge {
       font-size: 45px;
       opacity: 0;
@@ -132,7 +124,6 @@
       100% { opacity: 0; transform: scale(1.8); }
     }
 
-    /* 4. まもるエフェクト（バリア） */
     .fx-guard {
       width: 50px; height: 50px;
       border: 4px solid #38bdf8;
@@ -152,7 +143,6 @@
       100% { opacity: 0; transform: scale(1.3); }
     }
 
-    /* ポップアップテキスト（ダメージ/回復量の数値表示） */
     .pop-text {
       position: absolute;
       top: -15px;
@@ -174,7 +164,6 @@
     }
   </style>
 
-  <!-- Firebase SDK の読み込み -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
@@ -381,7 +370,6 @@
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-          <!-- プレイヤー枠 -->
           <div id="p-box" class="char-box">
             <div id="p-pop" class="pop-text"></div>
             <div id="p-fx" class="fx-overlay"></div>
@@ -392,14 +380,13 @@
             <div id="p-status-buff" style="font-size:11px; color:#eab308; font-weight:bold; height:16px;"></div>
           </div>
 
-          <!-- エネミー枠 -->
           <div id="e-box" class="char-box">
             <div id="e-pop" class="pop-text"></div>
             <div id="e-fx" class="fx-overlay"></div>
             <div id="e-icon" class="char-icon">🐉</div>
             <strong id="e-name">対戦相手</strong>
             <div class="hp-bar"><div id="e-hp-bar" class="hp-fill" style="width:100%;"></div></div>
-            <span id="e-hp-text">??/??</span>
+            <span id="e-hp-text">100%</span>
             <div id="e-status-buff" style="font-size:11px; color:#eab308; font-weight:bold; height:16px;"></div>
           </div>
         </div>
@@ -456,7 +443,7 @@
   </div>
 
 <script>
-  // --- Firebase 初期設定 ---
+  // Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyDV-djYmRPSfCV8NHitKoorCztH3LqLeI8",
     authDomain: "kisomon-ddfb8.firebaseapp.com",
@@ -472,7 +459,6 @@
   }
   const db = firebase.database();
 
-  // 基本ゲーム変数
   let points = 0;
   let pvpWins = 0;
   let pvpLosses = 0;
@@ -489,7 +475,7 @@
   let turnCount = 1;
 
   const BASE_STATS = { hp: 50, atk: 10, def: 5, spd: 10 };
-  const player = { ...BASE_STATS, maxHp: 50, lastAction: '', isCharged: false, isGuarding: false };
+  const player = { ...BASE_STATS, maxHp: 50, hp: 50, lastAction: '', isCharged: false, isGuarding: false };
   let enemy = { name: '', avatar: '🐉', maxHp: 0, hp: 0, atk: 0, def: 0, spd: 0, lastAction: '', isCharged: false, isGuarding: false };
   let inBattle = false;
   let isCpuBattle = false;
@@ -503,9 +489,6 @@
   let turnTimerInterval = null;
   let turnTimeLeft = 20;
 
-  // ==========================================
-  //  ★ エフェクト再生関数
-  // ==========================================
   function playEffect(targetSide, effectType, popText = '', popColor = '#ef4444') {
     const boxEl = document.getElementById(targetSide === 'player' ? 'p-box' : 'e-box');
     const fxOverlay = document.getElementById(targetSide === 'player' ? 'p-fx' : 'e-fx');
@@ -513,17 +496,14 @@
 
     if (!fxOverlay || !boxEl) return;
 
-    // クラスのリセット
     fxOverlay.innerHTML = '';
     boxEl.classList.remove('fx-shake');
 
-    // 1. 被ダメージで画面揺れ
     if (effectType === 'shake') {
-      void boxEl.offsetWidth; // リフロー強制
+      void boxEl.offsetWidth;
       boxEl.classList.add('fx-shake');
     }
 
-    // 2. エフェクト描画
     if (effectType === 'slash') {
       fxOverlay.innerHTML = '<div class="fx-slash active">⚔️</div>';
     } else if (effectType === 'heal') {
@@ -534,19 +514,15 @@
       fxOverlay.innerHTML = '<div class="fx-guard active"></div>';
     }
 
-    // 3. 数字のポップアップ表示
     if (popText !== '' && popEl) {
       popEl.innerText = popText;
       popEl.style.color = popColor;
       popEl.classList.remove('active');
-      void popEl.offsetWidth; // リフロー
+      void popEl.offsetWidth;
       popEl.classList.add('active');
     }
   }
 
-  // ==========================================
-  //  データ保存・ロード
-  // ==========================================
   function saveData() {
     const saveDataObj = {
       playerName: playerName,
@@ -694,7 +670,6 @@
       });
   }
 
-  // UI管理
   function selectAvatar(icon, doSave = true) {
     playerAvatar = icon;
     document.querySelectorAll('.avatar-option').forEach(el => {
@@ -742,7 +717,6 @@
     document.getElementById('val-spd').innerText = player.spd;
   }
 
-  // トレーニング
   function selectTrainingLevel(lvl) {
     selectedLevel = lvl;
     for (let i = 1; i <= 3; i++) {
@@ -860,7 +834,6 @@
     showScreen('screen-training-fb');
   }
 
-  // ステータス強化
   function addStat(type) {
     if (points < 1) return;
     points -= 1;
@@ -904,7 +877,6 @@
     updateUI();
   }
 
-  // タイマー制御
   function startBattleTimers() {
     stopBattleTimers();
     matchTimeLeft = 180;
@@ -965,20 +937,22 @@
     setAllButtonsDisabled(true);
 
     setTimeout(() => {
-      if (player.hp > enemy.hp) {
-        logMsg(`残りHPで上回った！ (${player.hp} vs ${enemy.hp})`);
+      const playerHpRatio = player.hp / player.maxHp;
+      const enemyHpRatio = enemy.hp / enemy.maxHp;
+
+      if (playerHpRatio > enemyHpRatio) {
+        logMsg(`残りHP率で上回った！`);
         finishBattle('win');
-      } else if (player.hp < enemy.hp) {
-        logMsg(`残りHPで下回った... (${player.hp} vs ${enemy.hp})`);
+      } else if (playerHpRatio < enemyHpRatio) {
+        logMsg(`残りHP率で下回った...`);
         finishBattle('lose');
       } else {
-        logMsg(`HPが同じため引き分け！ (${player.hp} vs ${enemy.hp})`);
+        logMsg(`HP率が同じため引き分け！`);
         finishBattle('draw');
       }
     }, 1500);
   }
 
-  // CPU対戦＆オンライン対戦
   function generateCpuStats(level) {
     let pts = Math.max(1, level);
     let hpPts = Math.floor(pts * 0.25);
@@ -1290,7 +1264,6 @@
     }
   }
 
-  // ★ エフェクト連動付き行動処理
   function processAction(actor, target, actionName, actorLabel, actorSide) {
     const targetSide = (actorSide === 'player') ? 'enemy' : 'player';
 
@@ -1307,7 +1280,7 @@
     else if (actionName === 'heal') {
       const healAmt = Math.max(10, Math.floor(actor.maxHp * 0.2));
       actor.hp = Math.min(actor.maxHp, actor.hp + healAmt);
-      logMsg(`${actorLabel}は **かいふく** を使った！ 体力が ${healAmt} 回復した！`);
+      logMsg(`${actorLabel}は **かいふく** を使った！ 体力が回復した！`);
       playEffect(actorSide, 'heal', `+${healAmt}`, '#22c55e');
     }
     else if (actionName === 'attack') {
@@ -1322,10 +1295,9 @@
         playEffect(targetSide, 'guard');
       } else {
         const damage = Math.max(1, baseAtk - target.def);
-        logMsg(`${actorLabel}の **こうげき**！ ${damage} のダメージ！`);
+        logMsg(`${actorLabel}の **こうげき**！ ダメージを与えた！`);
         target.hp = Math.max(0, target.hp - damage);
         
-        // 攻撃側アニメーション＋被ダメージ側の揺れ
         playEffect(targetSide, 'slash', `-${damage}`, '#ef4444');
         setTimeout(() => {
           playEffect(targetSide, 'shake');
@@ -1419,7 +1391,7 @@
     document.getElementById('p-hp-bar').style.width = pPct + '%';
     document.getElementById('e-hp-bar').style.width = ePct + '%';
     document.getElementById('p-hp-text').innerText = `${player.hp}/${player.maxHp}`;
-    document.getElementById('e-hp-text').innerText = `${enemy.hp}/${enemy.maxHp}`;
+    document.getElementById('e-hp-text').innerText = `${Math.ceil(ePct)}%`;
 
     document.getElementById('p-status-buff').innerText = player.isCharged ? '🔥 攻撃力2倍' : (player.isGuarding ? '🛡️ ガード中' : '');
     document.getElementById('e-status-buff').innerText = enemy.isCharged ? '🔥 攻撃力2倍' : (enemy.isGuarding ? '🛡️ ガード中' : '');
@@ -1431,7 +1403,6 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  // 初期化
   window.onload = function() {
     loadLocal();
     
