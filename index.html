@@ -1185,7 +1185,10 @@
   function playerAction(pAction) {
     if (!inBattle) return;
     clearInterval(turnTimerInterval);
+
+    // 技ボタンは無効化するが、降参ボタンだけは選択後も押せる状態を維持する
     setAllButtonsDisabled(true);
+    document.getElementById('btn-surrender').disabled = false;
 
     if (isCpuBattle) {
       const cpuCmd = chooseCpuAction();
