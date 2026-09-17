@@ -242,18 +242,18 @@
 
       <div style="text-align: left; margin: 15px 0;">
         <button type="button" class="lvl-btn selected" onclick="selectTrainingLevel(1)" id="lvl-btn-1">
-          🌱 <strong>レベル 1（小学前半）</strong><br>
-          <span style="font-size: 12px; color: #64748b;">1桁の足し算・引き算・掛け算 （1問につき <b>1 PT</b>）</span>
+          🌱 <strong>レベル 1（初級）</strong><br>
+          <span style="font-size: 12px; color: #64748b;">1桁同士の ＋−×（答えは正のみ） （1問につき <b>1 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(2)" id="lvl-btn-2">
-          🌿 <strong>レベル 2（小学後半）</strong><br>
-          <span style="font-size: 12px; color: #64748b;">＋−（2桁/1桁の組み合わせ）/ ×（1桁/2桁の組み合わせ） （1問につき <b>2 PT</b>）</span>
+          🌿 <strong>レベル 2（中級）</strong><br>
+          <span style="font-size: 12px; color: #64748b;">1桁同士 / 2桁と1桁（＋−×） / 2桁同士（＋−）（答えは正のみ） （1問につき <b>2 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(3)" id="lvl-btn-3">
-          🔥 <strong>レベル 3（中学レベル）</strong><br>
-          <span style="font-size: 12px; color: #64748b;">正負の数の計算（＋−×の桁数ランダム） （1問につき <b>3 PT</b>）</span>
+          🔥 <strong>レベル 3（上級）</strong><br>
+          <span style="font-size: 12px; color: #64748b;">1桁同士 / 2桁と1桁（＋−×） / 2桁同士（＋−）（答えは負も含む） （1問につき <b>3 PT</b>）</span>
         </button>
       </div>
 
@@ -471,7 +471,6 @@
   auth.onAuthStateChanged((user) => {
     if (user) {
       console.log("匿名ログイン成功! UID:", user.uid);
-      // ログイン成功後にデータの読み込みやオンライン対戦を開始できます
     }
   });
 
@@ -768,43 +767,68 @@
 
   function get1Digit() { return Math.floor(Math.random() * 9) + 1; }
   function get2Digit() { return Math.floor(Math.random() * 90) + 10; }
-  function getSigned1Digit() { let val = get1Digit(); return Math.random() < 0.5 ? val : -val; }
-  function getSigned2Digit() { let val = get2Digit(); return Math.random() < 0.5 ? val : -val; }
 
   function generateProblem() {
-    const ops = ['+', '-', '*'];
-    const op = ops[Math.floor(Math.random() * ops.length)];
-    let num1, num2;
-
+    let num1, num2, op;
     const formatNum = n => n < 0 ? `(${n})` : n;
 
     if (selectedLevel === 1) {
-      num1 = get1Digit(); num2 = get1Digit();
-    } else if (selectedLevel === 2) {
-      if (op === '*') {
-        const pattern = Math.floor(Math.random() * 3);
-        if (pattern === 0) { num1 = get1Digit(); num2 = get1Digit(); }
-        else if (pattern === 1) { num1 = get1Digit(); num2 = get2Digit(); }
-        else { num1 = get2Digit(); num2 = get1Digit(); }
-      } else {
-        const pattern = Math.floor(Math.random() * 4);
-        if (pattern === 0) { num1 = get2Digit(); num2 = get2Digit(); }
-        else if (pattern === 1) { num1 = get1Digit(); num2 = get2Digit(); }
-        else if (pattern === 2) { num1 = get2Digit(); num2 = get1Digit(); }
-        else { num1 = get1Digit(); num2 = get1Digit(); }
+      // 1桁同士の加法・減法・乗法（答えは正のみ）
+      const ops = ['+', '-', '*'];
+      op = ops[Math.floor(Math.random() * ops.length)];
+      num1 = get1Digit();
+      num2 = get1Digit();
+      if (op === '-' && num1 < num2) {
+        [num1, num2] = [num2, num1]; // マイナスにならないよう入れ替え
       }
-    } else if (selectedLevel === 3) {
-      if (op === '*') {
-        const pattern = Math.floor(Math.random() * 3);
-        if (pattern === 0) { num1 = getSigned1Digit(); num2 = getSigned1Digit(); }
-        else if (pattern === 1) { num1 = getSigned1Digit(); num2 = getSigned2Digit(); }
-        else { num1 = getSigned2Digit(); num2 = getSigned1Digit(); }
+    } 
+    else if (selectedLevel === 2) {
+      // レベル1の範囲 + (2桁と1桁の＋−×) + (2桁同士の＋−) （答えは正のみ）
+      const pattern = Math.floor(Math.random() * 3);
+      if (pattern === 0) {
+        // レベル1の内容
+        const ops = ['+', '-', '*'];
+        op = ops[Math.floor(Math.random() * ops.length)];
+        num1 = get1Digit();
+        num2 = get1Digit();
+        if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
+      } else if (pattern === 1) {
+        // 2桁と1桁（＋, −, ×）
+        const ops = ['+', '-', '*'];
+        op = ops[Math.floor(Math.random() * ops.length)];
+        if (Math.random() < 0.5) { num1 = get2Digit(); num2 = get1Digit(); }
+        else { num1 = get1Digit(); num2 = get2Digit(); }
+        if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
       } else {
-        const pattern = Math.floor(Math.random() * 4);
-        if (pattern === 0) { num1 = getSigned2Digit(); num2 = getSigned2Digit(); }
-        else if (pattern === 1) { num1 = getSigned1Digit(); num2 = getSigned2Digit(); }
-        else if (pattern === 2) { num1 = getSigned2Digit(); num2 = getSigned1Digit(); }
-        else { num1 = getSigned1Digit(); num2 = getSigned1Digit(); }
+        // 2桁同士（＋, −）
+        const ops = ['+', '-'];
+        op = ops[Math.floor(Math.random() * ops.length)];
+        num1 = get2Digit();
+        num2 = get2Digit();
+        if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
+      }
+    } 
+    else if (selectedLevel === 3) {
+      // レベル1の範囲 + (2桁と1桁の＋−×) + (2桁同士の＋−) （答えは負も可）
+      const pattern = Math.floor(Math.random() * 3);
+      if (pattern === 0) {
+        // レベル1の内容
+        const ops = ['+', '-', '*'];
+        op = ops[Math.floor(Math.random() * ops.length)];
+        num1 = get1Digit();
+        num2 = get1Digit();
+      } else if (pattern === 1) {
+        // 2桁と1桁（＋, −, ×）
+        const ops = ['+', '-', '*'];
+        op = ops[Math.floor(Math.random() * ops.length)];
+        if (Math.random() < 0.5) { num1 = get2Digit(); num2 = get1Digit(); }
+        else { num1 = get1Digit(); num2 = get2Digit(); }
+      } else {
+        // 2桁同士（＋, −）
+        const ops = ['+', '-'];
+        op = ops[Math.floor(Math.random() * ops.length)];
+        num1 = get2Digit();
+        num2 = get2Digit();
       }
     }
 
@@ -1186,7 +1210,6 @@
     if (!inBattle) return;
     clearInterval(turnTimerInterval);
 
-    // 技ボタンは無効化するが、降参ボタンだけは選択後も押せる状態を維持する
     setAllButtonsDisabled(true);
     document.getElementById('btn-surrender').disabled = false;
 
