@@ -238,21 +238,26 @@
     <!-- 2-1. トレーニング準備 -->
     <div id="screen-training-ready" class="screen">
       <h2>⏱️ 30秒トレーニング</h2>
-      <p style="font-size: 14px; color: #475569;">難易度を選択してください（1問あたりの獲得PTが変わります）</p>
+      <p style="font-size: 14px; color: #475569;">コースを選択してください（1問あたりの獲得PTが変わります）</p>
 
       <div style="text-align: left; margin: 15px 0;">
         <button type="button" class="lvl-btn selected" onclick="selectTrainingLevel(1)" id="lvl-btn-1">
-          🌱 <strong>レベル 1（初級）</strong><br>
+          🌱 <strong>トレーニング 1</strong><br>
           <span style="font-size: 12px; color: #64748b;">1桁同士の ＋−×（答えは正のみ） （1問につき <b>1 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(2)" id="lvl-btn-2">
-          🌿 <strong>レベル 2（中級）</strong><br>
+          🌿 <strong>トレーニング 2</strong><br>
           <span style="font-size: 12px; color: #64748b;">1桁同士 / 2桁と1桁（＋−×） / 2桁同士（＋−）（答えは正のみ） （1問につき <b>2 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(3)" id="lvl-btn-3">
-          🔥 <strong>レベル 3（上級）</strong><br>
+          ⚡ <strong>トレーニング 3</strong><br>
+          <span style="font-size: 12px; color: #64748b;">1桁同士の ＋−×（答えは正・負どちらも可） （1問につき <b>2 PT</b>）</span>
+        </button>
+
+        <button type="button" class="lvl-btn" onclick="selectTrainingLevel(4)" id="lvl-btn-4">
+          🔥 <strong>トレーニング 4</strong><br>
           <span style="font-size: 12px; color: #64748b;">1桁同士 / 2桁と1桁（＋−×） / 2桁同士（＋−）（答えは負も含む） （1問につき <b>3 PT</b>）</span>
         </button>
       </div>
@@ -264,7 +269,7 @@
 
     <!-- 2-2. トレーニングプレイ -->
     <div id="screen-training-play" class="screen">
-      <div style="font-size: 14px; color: #64748b; font-weight: bold;">難易度: <span id="play-level-label">レベル 1</span></div>
+      <div style="font-size: 14px; color: #64748b; font-weight: bold;"><span id="play-level-label">トレーニング 1</span></div>
       <div class="timer-display">残り: <span id="timer">30</span> 秒</div>
       <p>正解数: <strong id="current-score" style="color:var(--primary);">0</strong> 問</p>
       
@@ -506,6 +511,9 @@
   let turnTimerInterval = null;
   let turnTimeLeft = 20;
 
+  // トレーニングごとの獲得PT定義 (トレーニング1:1PT, トレーニング2:2PT, トレーニング3:2PT, トレーニング4:3PT)
+  const LEVEL_POINTS = { 1: 1, 2: 2, 3: 2, 4: 3 };
+
   function playEffect(targetSide, effectType, popText = '', popColor = '#ef4444') {
     const boxEl = document.getElementById(targetSide === 'player' ? 'p-box' : 'e-box');
     const fxOverlay = document.getElementById(targetSide === 'player' ? 'p-fx' : 'e-fx');
@@ -736,10 +744,12 @@
 
   function selectTrainingLevel(lvl) {
     selectedLevel = lvl;
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
       const btn = document.getElementById(`lvl-btn-${i}`);
-      if (i === lvl) btn.classList.add('selected');
-      else btn.classList.remove('selected');
+      if (btn) {
+        if (i === lvl) btn.classList.add('selected');
+        else btn.classList.remove('selected');
+      }
     }
   }
 
@@ -749,7 +759,7 @@
     document.getElementById('timer').innerText = timeLeft;
     document.getElementById('current-score').innerText = trainingScore;
     document.getElementById('calc-msg').innerText = '';
-    document.getElementById('play-level-label').innerText = `レベル ${selectedLevel}`;
+    document.getElementById('play-level-label').innerText = `トレーニング ${selectedLevel}`;
     
     showScreen('screen-training-play');
     generateProblem();
@@ -773,34 +783,29 @@
     const formatNum = n => n < 0 ? `(${n})` : n;
 
     if (selectedLevel === 1) {
-      // 1桁同士の加法・減法・乗法（答えは正のみ）
       const ops = ['+', '-', '*'];
       op = ops[Math.floor(Math.random() * ops.length)];
       num1 = get1Digit();
       num2 = get1Digit();
       if (op === '-' && num1 < num2) {
-        [num1, num2] = [num2, num1]; // マイナスにならないよう入れ替え
+        [num1, num2] = [num2, num1];
       }
     } 
     else if (selectedLevel === 2) {
-      // レベル1の範囲 + (2桁と1桁の＋−×) + (2桁同士の＋−) （答えは正のみ）
       const pattern = Math.floor(Math.random() * 3);
       if (pattern === 0) {
-        // レベル1の内容
         const ops = ['+', '-', '*'];
         op = ops[Math.floor(Math.random() * ops.length)];
         num1 = get1Digit();
         num2 = get1Digit();
         if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
       } else if (pattern === 1) {
-        // 2桁と1桁（＋, −, ×）
         const ops = ['+', '-', '*'];
         op = ops[Math.floor(Math.random() * ops.length)];
         if (Math.random() < 0.5) { num1 = get2Digit(); num2 = get1Digit(); }
         else { num1 = get1Digit(); num2 = get2Digit(); }
         if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
       } else {
-        // 2桁同士（＋, −）
         const ops = ['+', '-'];
         op = ops[Math.floor(Math.random() * ops.length)];
         num1 = get2Digit();
@@ -809,22 +814,24 @@
       }
     } 
     else if (selectedLevel === 3) {
-      // レベル1の範囲 + (2桁と1桁の＋−×) + (2桁同士の＋−) （答えは負も可）
+      const ops = ['+', '-', '*'];
+      op = ops[Math.floor(Math.random() * ops.length)];
+      num1 = get1Digit();
+      num2 = get1Digit();
+    }
+    else if (selectedLevel === 4) {
       const pattern = Math.floor(Math.random() * 3);
       if (pattern === 0) {
-        // レベル1の内容
         const ops = ['+', '-', '*'];
         op = ops[Math.floor(Math.random() * ops.length)];
         num1 = get1Digit();
         num2 = get1Digit();
       } else if (pattern === 1) {
-        // 2桁と1桁（＋, −, ×）
         const ops = ['+', '-', '*'];
         op = ops[Math.floor(Math.random() * ops.length)];
         if (Math.random() < 0.5) { num1 = get2Digit(); num2 = get1Digit(); }
         else { num1 = get1Digit(); num2 = get2Digit(); }
       } else {
-        // 2桁同士（＋, −）
         const ops = ['+', '-'];
         op = ops[Math.floor(Math.random() * ops.length)];
         num1 = get2Digit();
@@ -844,9 +851,11 @@
   function checkAnswer() {
     const userAns = parseInt(document.getElementById('answer').value, 10);
     const msg = document.getElementById('calc-msg');
+    const ptPerAns = LEVEL_POINTS[selectedLevel] || 1;
+
     if (userAns === currentAns) {
       trainingScore++;
-      points += selectedLevel;
+      points += ptPerAns;
       saveData();
       msg.style.color = '#22c55e';
       msg.innerText = '〇 正解！';
@@ -863,7 +872,8 @@
   });
 
   function endTraining() {
-    const earnedPoints = trainingScore * selectedLevel;
+    const ptPerAns = LEVEL_POINTS[selectedLevel] || 1;
+    const earnedPoints = trainingScore * ptPerAns;
     document.getElementById('fb-score').innerText = trainingScore;
     document.getElementById('fb-pt').innerText = `+${earnedPoints}`;
     
