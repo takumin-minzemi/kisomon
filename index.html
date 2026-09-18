@@ -10,7 +10,7 @@
       --bg: #f0f2f5;
     }
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); text-align: center; margin: 0; padding: 10px; }
-    .card { background: white; max-width: 480px; margin: 0 auto; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); box-sizing: border-box; }
+    .card { background: white; max-width: 480px; margin: 0 auto; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); box-sizing: border-box; position: relative; }
     
     .screen { display: none; }
     .screen.active { display: block; }
@@ -21,10 +21,12 @@
     button.danger { background: #ef4444; }
     button.success { background: #10b981; }
     
-    input[type="number"] { font-size: 20px; padding: 6px; border: 2px solid #cbd5e1; border-radius: 8px; text-align: center; width: 100px; }
+    input[type="number"] { font-size: 18px; padding: 6px; border: 2px solid #cbd5e1; border-radius: 8px; text-align: center; width: 80px; }
     input[type="text"] { font-size: 16px; padding: 8px; width: 180px; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; }
     
     .status-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; background: #f8fafc; padding: 8px 12px; border-radius: 8px; }
+    .status-label { font-weight: bold; font-size: 15px; width: 80px; text-align: left; }
+    .stat-input-group { display: flex; align-items: center; gap: 6px; }
     .btn-group { display: flex; gap: 4px; align-items: center; }
     .btn-small { padding: 6px 10px; font-size: 13px; margin: 0; }
     .btn-reset { padding: 6px 8px; font-size: 12px; margin: 0; background: #f59e0b; }
@@ -44,7 +46,6 @@
     .avatar-option { font-size: 26px; cursor: pointer; padding: 4px 8px; border: 2px solid transparent; border-radius: 8px; display: inline-block; }
     .avatar-option.selected { border-color: var(--primary); background: #e0e7ff; }
     
-    /* 戦闘キャラ表示枠 */
     .char-box { position: relative; width: 48%; display: inline-block; }
     .char-icon { font-size: 36px; line-height: 1; margin-bottom: 2px; position: relative; z-index: 1; }
     
@@ -60,7 +61,14 @@
     
     .timer-header { display: flex; justify-content: space-between; background: #1e293b; color: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
 
-    /* アニメーション & エフェクト CSS */
+    .skill-card {
+      background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 10px; margin: 8px 0;
+      text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    }
+    .skill-card.selected { border-color: var(--primary); background: #e0e7ff; }
+    .skill-info { font-size: 13px; color: #475569; }
+    .skill-title { font-weight: bold; font-size: 15px; color: #1e293b; }
+
     .fx-shake { animation: shake 0.4s ease-in-out; }
     @keyframes shake {
       0% { transform: translateX(0); }
@@ -81,43 +89,24 @@
       z-index: 10;
     }
 
-    .fx-slash {
-      width: 80px; height: 80px;
-      font-size: 48px;
-      opacity: 0;
-      transform: scale(0.2) rotate(-45deg);
-    }
-    .fx-slash.active {
-      animation: slashAnim 0.4s ease-out forwards;
-    }
+    .fx-slash { width: 80px; height: 80px; font-size: 48px; opacity: 0; transform: scale(0.2) rotate(-45deg); }
+    .fx-slash.active { animation: slashAnim 0.4s ease-out forwards; }
     @keyframes slashAnim {
       0% { opacity: 1; transform: scale(0.3) rotate(-45deg); }
       50% { opacity: 1; transform: scale(1.4) rotate(15deg); }
       100% { opacity: 0; transform: scale(1.6) rotate(30deg); }
     }
 
-    .fx-heal {
-      font-size: 40px;
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    .fx-heal.active {
-      animation: healAnim 0.7s ease-out forwards;
-    }
+    .fx-heal { font-size: 40px; opacity: 0; transform: translateY(10px); }
+    .fx-heal.active { animation: healAnim 0.7s ease-out forwards; }
     @keyframes healAnim {
       0% { opacity: 0; transform: translateY(15px) scale(0.5); }
       50% { opacity: 1; transform: translateY(-10px) scale(1.3); }
       100% { opacity: 0; transform: translateY(-30px) scale(1); }
     }
 
-    .fx-charge {
-      font-size: 45px;
-      opacity: 0;
-      transform: scale(0.5);
-    }
-    .fx-charge.active {
-      animation: chargeAnim 0.6s ease-out forwards;
-    }
+    .fx-charge { font-size: 45px; opacity: 0; transform: scale(0.5); }
+    .fx-charge.active { animation: chargeAnim 0.6s ease-out forwards; }
     @keyframes chargeAnim {
       0% { opacity: 0; transform: scale(0.4); }
       50% { opacity: 1; transform: scale(1.4); }
@@ -125,17 +114,10 @@
     }
 
     .fx-guard {
-      width: 50px; height: 50px;
-      border: 4px solid #38bdf8;
-      background: rgba(56, 189, 248, 0.3);
-      border-radius: 50%;
-      box-shadow: 0 0 15px #38bdf8;
-      opacity: 0;
-      transform: scale(0.5);
+      width: 50px; height: 50px; border: 4px solid #38bdf8; background: rgba(56, 189, 248, 0.3);
+      border-radius: 50%; box-shadow: 0 0 15px #38bdf8; opacity: 0; transform: scale(0.5);
     }
-    .fx-guard.active {
-      animation: guardAnim 0.6s ease-out forwards;
-    }
+    .fx-guard.active { animation: guardAnim 0.6s ease-out forwards; }
     @keyframes guardAnim {
       0% { opacity: 0; transform: scale(0.3); }
       40% { opacity: 0.9; transform: scale(1.2); }
@@ -144,23 +126,25 @@
     }
 
     .pop-text {
-      position: absolute;
-      top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 20px;
-      font-weight: bold;
-      z-index: 15;
-      opacity: 0;
-      pointer-events: none;
+      position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+      font-size: 20px; font-weight: bold; z-index: 15; opacity: 0; pointer-events: none;
     }
-    .pop-text.active {
-      animation: popAnim 0.8s ease-out forwards;
-    }
+    .pop-text.active { animation: popAnim 0.8s ease-out forwards; }
     @keyframes popAnim {
       0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
       30% { transform: translate(-50%, -15px) scale(1.2); }
       100% { opacity: 0; transform: translate(-50%, -30px) scale(1); }
+    }
+
+    /* 呪いミニ問題用モーダル */
+    .curse-modal-bg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); border-radius: 16px;
+      display: flex; justify-content: center; align-items: center; z-index: 100;
+    }
+    .curse-modal-card {
+      background: white; padding: 20px; border-radius: 12px; border: 3px solid #8b5cf6;
+      width: 80%; max-width: 300px; text-align: center;
     }
   </style>
 
@@ -170,6 +154,19 @@
 </head>
 <body>
   <div class="card">
+
+    <!-- 呪い試練用ポップアップモーダル -->
+    <div id="curse-modal" class="curse-modal-bg" style="display: none;">
+      <div class="curse-modal-card">
+        <h3 style="margin: 0 0 10px 0; color: #7c3aed;">💀 呪いの解呪試練！</h3>
+        <p style="font-size: 13px; color: #475569; margin: 4px 0;">5秒以内に解答せよ！失敗すると体力が削られる！</p>
+        <div style="font-size: 24px; font-weight: bold; color: #ef4444; margin: 8px 0;">残り: <span id="curse-timer">5</span>秒</div>
+        <div style="font-size: 24px; font-weight: bold; margin: 15px 0;">
+          <span id="curse-problem">?</span> = <input type="number" id="curse-answer" style="width: 70px;" autofocus>
+        </div>
+        <button onclick="checkCurseAnswer()" style="background: #8b5cf6; padding: 8px 16px; font-size: 15px;">回答</button>
+      </div>
+    </div>
 
     <!-- 1. ホーム画面 -->
     <div id="screen-home" class="screen active">
@@ -196,7 +193,8 @@
         </div>
       </div>
 
-      <p style="margin-bottom: 5px;">所持ポイント: <strong id="home-pt" style="font-size:24px; color:var(--primary);">0</strong> PT</p>
+      <p style="font-size:20px; font-weight:bold; margin-bottom: 2px;">レベル <span id="home-level" style="font-size:26px; color:#f59e0b;">0</span></p>
+      <p style="margin-top: 0; margin-bottom: 5px; font-size:14px; color:#64748b;">付与可能ポイント: <strong id="home-pt" style="font-size:18px; color:var(--primary);">0</strong> PT</p>
       
       <div class="record-badge">🏆 対人戦: <span id="home-pvp-wins">0</span>勝 <span id="home-pvp-losses">0</span>敗 <span id="home-pvp-draws">0</span>分</div>
 
@@ -208,12 +206,27 @@
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button onclick="showScreen('screen-training-ready')">⏱️ トレーニング (30秒)</button>
         <button onclick="showScreen('screen-status')">⚙️ ステータス強化</button>
+        <button onclick="showScreen('screen-skills')">📖 技デッキ編集</button>
         <button onclick="showScreen('screen-battle')">⚔️ 対戦モード</button>
         <button class="secondary" onclick="showScreen('screen-save')">☁️ クラウド連携・引き継ぎ</button>
       </div>
     </div>
 
-    <!-- 1-2. クラウド保存・引き継ぎ画面 -->
+    <!-- 1-2. 技デッキ編集画面 -->
+    <div id="screen-skills" class="screen">
+      <h2>📖 技デッキ編集</h2>
+      <p style="font-size: 13px; color: #64748b;">バトルに持ち込む技を <strong>4つ</strong> 選択してください。</p>
+      <p style="font-weight: bold;">選択中: <span id="selected-skills-count" style="color:var(--primary);">0</span> / 4</p>
+      
+      <div id="skills-list" style="max-height: 280px; overflow-y: auto; padding: 2px;">
+        <!-- JSで動的生成 -->
+      </div>
+
+      <br>
+      <button class="success" onclick="saveSkillsAndBack()">保存して戻る</button>
+    </div>
+
+    <!-- 1-3. クラウド保存・引き継ぎ画面 -->
     <div id="screen-save" class="screen">
       <h2>☁️ セーブデータ・クラウド連携</h2>
       <p style="font-size: 13px; color: #64748b;">
@@ -253,12 +266,12 @@
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(3)" id="lvl-btn-3">
           ⚡ <strong>トレーニング 3</strong><br>
-          <span style="font-size: 12px; color: #64748b;">1桁同士の ＋−×（答えは正・負どちらも可） （1問につき <b>2 PT</b>）</span>
+          <span style="font-size: 12px; color: #64748b;">1桁同士の ＋−×（負の数を含む） （1問につき <b>2 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(4)" id="lvl-btn-4">
           🔥 <strong>トレーニング 4</strong><br>
-          <span style="font-size: 12px; color: #64748b;">1桁同士 / 2桁と1桁（＋−×） / 2桁同士（＋−）（答えは負も含む） （1問につき <b>3 PT</b>）</span>
+          <span style="font-size: 12px; color: #64748b;">1桁・2桁の ＋−×（負の数を含む） （1問につき <b>3 PT</b>）</span>
         </button>
       </div>
 
@@ -294,11 +307,14 @@
     <!-- 3. ステータス強化 -->
     <div id="screen-status" class="screen">
       <h2>⚙️ ステータス強化</h2>
-      <p>所持ポイント: <strong id="status-pt" style="font-size:24px; color:var(--primary);">0</strong> PT</p>
-      <p style="font-size: 12px; color: #64748b;">※ どのステータスも 1 PT で +1 強化できます</p>
+      <p>付与可能ポイント: <strong id="status-pt" style="font-size:24px; color:var(--primary);">0</strong> PT</p>
+      <p style="font-size: 12px; color: #64748b;">※ ボタン操作のほか、数値を直接入力して調整できます</p>
       
       <div class="status-row">
-        <span>HP (+1): <b id="val-hp">50</b></span>
+        <span class="status-label">HP</span>
+        <div class="stat-input-group">
+          <input type="number" id="input-hp" onchange="onStatInputChange('hp')" oninput="onStatInputChange('hp')">
+        </div>
         <div class="btn-group">
           <button class="btn-small danger" onclick="subStat('hp')">-</button>
           <button class="btn-small" onclick="addStat('hp')">+</button>
@@ -306,7 +322,10 @@
         </div>
       </div>
       <div class="status-row">
-        <span>攻撃力 (+1): <b id="val-atk">10</b></span>
+        <span class="status-label">攻撃力</span>
+        <div class="stat-input-group">
+          <input type="number" id="input-atk" onchange="onStatInputChange('atk')" oninput="onStatInputChange('atk')">
+        </div>
         <div class="btn-group">
           <button class="btn-small danger" onclick="subStat('atk')">-</button>
           <button class="btn-small" onclick="addStat('atk')">+</button>
@@ -314,7 +333,10 @@
         </div>
       </div>
       <div class="status-row">
-        <span>防御力 (+1): <b id="val-def">5</b></span>
+        <span class="status-label">防御力</span>
+        <div class="stat-input-group">
+          <input type="number" id="input-def" onchange="onStatInputChange('def')" oninput="onStatInputChange('def')">
+        </div>
         <div class="btn-group">
           <button class="btn-small danger" onclick="subStat('def')">-</button>
           <button class="btn-small" onclick="addStat('def')">+</button>
@@ -322,7 +344,10 @@
         </div>
       </div>
       <div class="status-row">
-        <span>素早さ (+1): <b id="val-spd">10</b></span>
+        <span class="status-label">素早さ</span>
+        <div class="stat-input-group">
+          <input type="number" id="input-spd" onchange="onStatInputChange('spd')" oninput="onStatInputChange('spd')">
+        </div>
         <div class="btn-group">
           <button class="btn-small danger" onclick="subStat('spd')">-</button>
           <button class="btn-small" onclick="addStat('spd')">+</button>
@@ -397,24 +422,8 @@
           </div>
         </div>
 
-        <div class="cmd-grid">
-          <div class="cmd-btn-container">
-            <button id="btn-attack" onclick="playerAction('attack')">⚔️ こうげき</button>
-            <div id="prev-attack" class="cmd-preview">攻撃力 - 相手の防御力</div>
-          </div>
-          <div class="cmd-btn-container">
-            <button id="btn-heal" onclick="playerAction('heal')">🧪 かいふく</button>
-            <div id="prev-heal" class="cmd-preview">最大HPの20%を回復</div>
-          </div>
-          <div class="cmd-btn-container">
-            <button id="btn-charge" onclick="playerAction('charge')">🔥 溜める</button>
-            <div id="prev-charge" class="cmd-preview">次の攻撃力を2倍</div>
-          </div>
-          <div class="cmd-btn-container">
-            <button id="btn-guard" onclick="playerAction('guard')">🛡️ まもる</button>
-            <div id="prev-guard" class="cmd-preview">先制で攻撃を無効化</div>
-          </div>
-        </div>
+        <!-- 選択された4つの技を動的に描画 -->
+        <div class="cmd-grid" id="battle-cmd-grid"></div>
 
         <div style="margin-top: 10px;">
           <button id="btn-surrender" class="secondary" style="width:100%; font-size:14px; padding:8px 0; margin:0;" onclick="surrender()">🏳️ 降参する</button>
@@ -449,6 +458,25 @@
   </div>
 
 <script>
+  // --- 技の定義データ ---
+  const SKILLS = {
+    attack:       { id: 'attack',       name: '⚔️ こうげき',   desc: '攻撃力 - 相手の防御力', type: 'attack', priority: 0 },
+    first_attack: { id: 'first_attack', name: '⚡ 先制攻撃',   desc: '必ず先制し、攻撃力の70%-相手の防御力ダメージ', type: 'attack', priority: 1 },
+    heal:         { id: 'heal',         name: '🧪 かいふく',   desc: '最大HPの20%を回復', type: 'heal', priority: 0 },
+    charge:       { id: 'charge',       name: '🔥 溜める',     desc: '次の攻撃力を2倍', type: 'charge', priority: 0 },
+    guard:        { id: 'guard',        name: '🛡️ まもる',     desc: '先制で攻撃を無効化', type: 'guard', priority: 2 },
+    counter:      { id: 'counter',      name: '↩️ カウンター', desc: '後攻で受けたダメ+自分の防御力を与える', type: 'counter', priority: -1 },
+    curse:        { id: 'curse',        name: '💀 のろい',     desc: '5Tの間毎T1/16削る+相手に計算試練を課す', type: 'curse', priority: 0 }
+  };
+
+  // 優先度の表記文字列を取得するヘルパー関数
+  function formatPriority(priority) {
+    return priority > 0 ? `+${priority}` : `${priority}`;
+  }
+
+  // デフォルトのデッキ設定
+  let selectedSkills = ['attack', 'heal', 'charge', 'guard'];
+
   // Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyDV-djYmRPSfCV8NHitKoorCztH3LqLeI8",
@@ -464,20 +492,8 @@
     firebase.initializeApp(firebaseConfig);
   }
 
-  // Firebase Authentication の初期化
   const auth = firebase.auth();
-
-  // ページ読み込み時に自動で匿名ログインを実行
-  auth.signInAnonymously().catch((error) => {
-    console.error("匿名認証エラー:", error);
-  });
-
-  // ログイン状態の監視
-  auth.onAuthStateChanged((user) => {
-    if (user) {
-      console.log("匿名ログイン成功! UID:", user.uid);
-    }
-  });
+  auth.signInAnonymously().catch(error => console.error("匿名認証エラー:", error));
 
   const db = firebase.database();
 
@@ -497,8 +513,8 @@
   let turnCount = 1;
 
   const BASE_STATS = { hp: 50, atk: 10, def: 5, spd: 10 };
-  const player = { ...BASE_STATS, maxHp: 50, hp: 50, lastAction: '', isCharged: false, isGuarding: false };
-  let enemy = { name: '', avatar: '🐉', maxHp: 0, hp: 0, atk: 0, def: 0, spd: 0, lastAction: '', isCharged: false, isGuarding: false };
+  const player = { ...BASE_STATS, maxHp: 50, hp: 50, lastAction: '', isCharged: false, isGuarding: false, turnDamageTaken: 0, curseTurns: 0 };
+  let enemy = { name: '', avatar: '🐉', maxHp: 0, hp: 0, atk: 0, def: 0, spd: 0, lastAction: '', isCharged: false, isGuarding: false, turnDamageTaken: 0, curseTurns: 0, selectedSkills: ['attack', 'heal', 'charge', 'guard', 'curse'] };
   let inBattle = false;
   let isCpuBattle = false;
 
@@ -511,7 +527,11 @@
   let turnTimerInterval = null;
   let turnTimeLeft = 20;
 
-  // トレーニングごとの獲得PT定義 (トレーニング1:1PT, トレーニング2:2PT, トレーニング3:2PT, トレーニング4:3PT)
+  // 呪い試練用変数
+  let curseTimerInterval = null;
+  let curseTimeLeft = 5;
+  let curseAns = 0;
+
   const LEVEL_POINTS = { 1: 1, 2: 2, 3: 2, 4: 3 };
 
   function playEffect(targetSide, effectType, popText = '', popColor = '#ef4444') {
@@ -556,6 +576,7 @@
       pvpWins: pvpWins,
       pvpLosses: pvpLosses,
       pvpDraws: pvpDraws,
+      selectedSkills: selectedSkills,
       stats: {
         maxHp: player.maxHp,
         atk: player.atk,
@@ -586,6 +607,9 @@
         pvpWins = data.pvpWins || 0;
         pvpLosses = data.pvpLosses || 0;
         pvpDraws = data.pvpDraws || 0;
+        if (data.selectedSkills && Array.isArray(data.selectedSkills)) {
+          selectedSkills = data.selectedSkills;
+        }
 
         if (data.stats) {
           player.maxHp = data.stats.maxHp || BASE_STATS.hp;
@@ -671,6 +695,9 @@
         pvpWins = data.pvpWins || 0;
         pvpLosses = data.pvpLosses || 0;
         pvpDraws = data.pvpDraws || 0;
+        if (data.selectedSkills && Array.isArray(data.selectedSkills)) {
+          selectedSkills = data.selectedSkills;
+        }
 
         if (data.stats) {
           player.maxHp = data.stats.maxHp || BASE_STATS.hp;
@@ -715,11 +742,87 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     if (screenId === 'screen-battle') updateCpuLevel();
+    if (screenId === 'screen-skills') renderSkillsList();
     if (screenId === 'screen-save') document.getElementById('save-msg').innerText = '';
     updateUI();
   }
 
+  function renderSkillsList() {
+    const listContainer = document.getElementById('skills-list');
+    listContainer.innerHTML = '';
+    document.getElementById('selected-skills-count').innerText = selectedSkills.length;
+
+    Object.keys(SKILLS).forEach(key => {
+      const skill = SKILLS[key];
+      const isSelected = selectedSkills.includes(key);
+
+      const div = document.createElement('div');
+      div.className = `skill-card ${isSelected ? 'selected' : ''}`;
+      div.onclick = () => toggleSkillSelection(key);
+      div.innerHTML = `
+        <div>
+          <div class="skill-title">${skill.name} <span style="font-size:12px; font-weight:normal; color:#4f46e5;">[優先度：${formatPriority(skill.priority)}]</span></div>
+          <div class="skill-info">${skill.desc}</div>
+        </div>
+        <div style="font-size:20px;">${isSelected ? '✅' : '⬜'}</div>
+      `;
+      listContainer.appendChild(div);
+    });
+  }
+
+  function toggleSkillSelection(skillId) {
+    const idx = selectedSkills.indexOf(skillId);
+    if (idx > -1) {
+      if (selectedSkills.length <= 1) {
+        alert('技は最低1つ以上選択してください');
+        return;
+      }
+      selectedSkills.splice(idx, 1);
+    } else {
+      if (selectedSkills.length >= 4) {
+        alert('技は最大4つまでしか選択できません');
+        return;
+      }
+      selectedSkills.push(skillId);
+    }
+    renderSkillsList();
+  }
+
+  function saveSkillsAndBack() {
+    if (selectedSkills.length !== 4) {
+      alert('技をちょうど4つ選択してください');
+      return;
+    }
+    saveData();
+    showScreen('screen-home');
+  }
+
+  function renderBattleCommands() {
+    const grid = document.getElementById('battle-cmd-grid');
+    grid.innerHTML = '';
+
+    selectedSkills.forEach(skillId => {
+      const skill = SKILLS[skillId];
+      if (!skill) return;
+
+      const container = document.createElement('div');
+      container.className = 'cmd-btn-container';
+      container.innerHTML = `
+        <button id="btn-skill-${skill.id}" onclick="playerAction('${skill.id}')">${skill.name} (優先度:${formatPriority(skill.priority)})</button>
+        <div id="prev-${skill.id}" class="cmd-preview">${skill.desc}</div>
+      `;
+      grid.appendChild(container);
+    });
+  }
+
   function updateUI() {
+    const usedPoints = (player.maxHp - BASE_STATS.hp) + 
+                       (player.atk - BASE_STATS.atk) + 
+                       (player.def - BASE_STATS.def) + 
+                       (player.spd - BASE_STATS.spd);
+    const totalLevel = usedPoints + points;
+
+    document.getElementById('home-level').innerText = totalLevel;
     document.getElementById('home-pt').innerText = points;
     document.getElementById('status-pt').innerText = points;
     
@@ -736,10 +839,10 @@
     document.getElementById('home-def').innerText = player.def;
     document.getElementById('home-spd').innerText = player.spd;
 
-    document.getElementById('val-hp').innerText = player.maxHp;
-    document.getElementById('val-atk').innerText = player.atk;
-    document.getElementById('val-def').innerText = player.def;
-    document.getElementById('val-spd').innerText = player.spd;
+    if (document.activeElement !== document.getElementById('input-hp')) document.getElementById('input-hp').value = player.maxHp;
+    if (document.activeElement !== document.getElementById('input-atk')) document.getElementById('input-atk').value = player.atk;
+    if (document.activeElement !== document.getElementById('input-def')) document.getElementById('input-def').value = player.def;
+    if (document.activeElement !== document.getElementById('input-spd')) document.getElementById('input-spd').value = player.spd;
   }
 
   function selectTrainingLevel(lvl) {
@@ -787,9 +890,7 @@
       op = ops[Math.floor(Math.random() * ops.length)];
       num1 = get1Digit();
       num2 = get1Digit();
-      if (op === '-' && num1 < num2) {
-        [num1, num2] = [num2, num1];
-      }
+      if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
     } 
     else if (selectedLevel === 2) {
       const pattern = Math.floor(Math.random() * 3);
@@ -818,6 +919,14 @@
       op = ops[Math.floor(Math.random() * ops.length)];
       num1 = get1Digit();
       num2 = get1Digit();
+
+      if (op === '*') {
+        if (Math.random() < 0.5) num1 = -num1;
+        if (Math.random() < 0.5) num2 = -num2;
+      } else {
+        if (Math.random() < 0.5) num1 = -num1;
+        if (Math.random() < 0.5) num2 = -num2;
+      }
     }
     else if (selectedLevel === 4) {
       const pattern = Math.floor(Math.random() * 3);
@@ -836,6 +945,14 @@
         op = ops[Math.floor(Math.random() * ops.length)];
         num1 = get2Digit();
         num2 = get2Digit();
+      }
+
+      if (op === '*') {
+        if (Math.random() < 0.5) num1 = -num1;
+        if (Math.random() < 0.5) num2 = -num2;
+      } else {
+        if (Math.random() < 0.5) num1 = -num1;
+        if (Math.random() < 0.5) num2 = -num2;
       }
     }
 
@@ -884,6 +1001,34 @@
     document.getElementById('fb-comment').innerText = comment;
 
     showScreen('screen-training-fb');
+  }
+
+  function onStatInputChange(type) {
+    const inputEl = document.getElementById(`input-${type}`);
+    let newVal = parseInt(inputEl.value, 10);
+    const minVal = BASE_STATS[type];
+
+    if (isNaN(newVal) || newVal < minVal) {
+      newVal = minVal;
+    }
+
+    let currentVal = (type === 'hp') ? player.maxHp : player[type];
+    let diff = newVal - currentVal;
+
+    if (diff > 0) {
+      if (diff > points) diff = points;
+      points -= diff;
+      if (type === 'hp') { player.maxHp += diff; player.hp += diff; }
+      else player[type] += diff;
+    } else if (diff < 0) {
+      const refund = Math.abs(diff);
+      points += refund;
+      if (type === 'hp') { player.maxHp -= refund; player.hp -= refund; }
+      else player[type] -= refund;
+    }
+
+    saveData();
+    updateUI();
   }
 
   function addStat(type) {
@@ -956,14 +1101,21 @@
       document.getElementById('turn-timer-text').innerText = turnTimeLeft;
       if (turnTimeLeft <= 0) {
         clearInterval(turnTimerInterval);
+        closeCurseModal(); // 呪い画面も閉じる
         autoChooseRandomAction();
       }
     }, 1000);
+
+    // プレイヤーが呪い状態の場合、ミニ問題を差し込む
+    if (player.curseTurns > 0) {
+      promptCurseChallenge();
+    }
   }
 
   function stopBattleTimers() {
     clearInterval(matchTimerInterval);
     clearInterval(turnTimerInterval);
+    closeCurseModal();
   }
 
   function updateMatchTimerDisplay() {
@@ -972,13 +1124,86 @@
     document.getElementById('match-timer-text').innerText = `${min}:${sec < 10 ? '0' : ''}${sec}`;
   }
 
+  // --- 呪いのミニ問題ロジック ---
+  function promptCurseChallenge() {
+    setAllButtonsDisabled(true); // 問題を解くまでコマンドボタンを無効化
+    
+    // 1桁同士の加法・減法・乗法（答え >= 0）
+    const ops = ['+', '-', '*'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let n1 = get1Digit();
+    let n2 = get1Digit();
+
+    if (op === '-' && n1 < n2) [n1, n2] = [n2, n1]; // 答えが負にならないように入れ替え
+
+    if (op === '+') curseAns = n1 + n2;
+    if (op === '-') curseAns = n1 - n2;
+    if (op === '*') curseAns = n1 * n2;
+
+    document.getElementById('curse-problem').innerText = `${n1} ${op === '*' ? '×' : op} ${n2}`;
+    document.getElementById('curse-answer').value = '';
+    document.getElementById('curse-modal').style.display = 'flex';
+    document.getElementById('curse-answer').focus();
+
+    curseTimeLeft = 5;
+    document.getElementById('curse-timer').innerText = curseTimeLeft;
+
+    clearInterval(curseTimerInterval);
+    curseTimerInterval = setInterval(() => {
+      curseTimeLeft--;
+      document.getElementById('curse-timer').innerText = curseTimeLeft;
+      if (curseTimeLeft <= 0) {
+        clearInterval(curseTimerInterval);
+        failCurseChallenge('時間切れ！');
+      }
+    }, 1000);
+  }
+
+  function checkCurseAnswer() {
+    const val = parseInt(document.getElementById('curse-answer').value, 10);
+    clearInterval(curseTimerInterval);
+    if (val === curseAns) {
+      logMsg('✨ <strong>呪いの試練をクリア！</strong> コマンドを選択できます。');
+      closeCurseModal();
+      updateCmdButtons(); // ボタン解禁
+    } else {
+      failCurseChallenge('不正解！');
+    }
+  }
+
+  document.getElementById('curse-answer').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkCurseAnswer();
+  });
+
+  function failCurseChallenge(reason) {
+    closeCurseModal();
+    const dmg = Math.max(1, Math.floor(player.maxHp / 16));
+    player.hp = Math.max(0, player.hp - dmg);
+    logMsg(`💀 試練失敗（${reason}）！ 呪いにより体力が <strong>${dmg}</strong> 削られた！`);
+    playEffect('player', 'slash', `-${dmg}`, '#8b5cf6');
+    updateHpDisplay();
+
+    if (player.hp <= 0) {
+      finishBattle('lose');
+    } else {
+      updateCmdButtons(); // ボタン解禁してアクションへ
+    }
+  }
+
+  function closeCurseModal() {
+    clearInterval(curseTimerInterval);
+    document.getElementById('curse-modal').style.display = 'none';
+  }
+
   function autoChooseRandomAction() {
     if (!inBattle) return;
-    const availableActions = ['attack', 'heal'];
-    if (player.lastAction !== 'charge') availableActions.push('charge');
-    if (player.lastAction !== 'guard') availableActions.push('guard');
+    const availableActions = selectedSkills.filter(act => {
+      if (act === 'guard' && player.lastAction === 'guard') return false;
+      if (act === 'charge' && player.lastAction === 'charge') return false;
+      return true;
+    });
 
-    const randomAction = availableActions[Math.floor(Math.random() * availableActions.length)];
+    const randomAction = availableActions[Math.floor(Math.random() * availableActions.length)] || selectedSkills[0];
     logMsg('⏳ 時間切れ！技が自動で選ばれました。');
     playerAction(randomAction);
   }
@@ -1036,6 +1261,8 @@
     player.lastAction = '';
     player.isCharged = false;
     player.isGuarding = false;
+    player.turnDamageTaken = 0;
+    player.curseTurns = 0;
 
     let lvl = parseInt(document.getElementById('cpu-level-input').value, 10) || 10;
     const cpuStats = generateCpuStats(lvl);
@@ -1058,8 +1285,13 @@
       spd: cpuStats.spd,
       lastAction: '',
       isCharged: false,
-      isGuarding: false
+      isGuarding: false,
+      turnDamageTaken: 0,
+      curseTurns: 0,
+      selectedSkills: ['attack', 'first_attack', 'heal', 'charge', 'guard', 'curse']
     };
+
+    renderBattleCommands();
 
     document.getElementById('enemy-select-area').style.display = 'none';
     document.getElementById('btn-battle-back').style.display = 'none';
@@ -1077,10 +1309,10 @@
   }
 
   function chooseCpuAction() {
-    const actions = ['attack', 'heal', 'charge', 'guard'];
-    let validActions = actions.filter(act => {
+    let validActions = enemy.selectedSkills.filter(act => {
       if (act === 'guard' && enemy.lastAction === 'guard') return false;
       if (act === 'charge' && enemy.lastAction === 'charge') return false;
+      if (act === 'curse' && player.curseTurns > 0) return false; // 既に呪い状態なら重ねがけしない
       return true;
     });
 
@@ -1088,7 +1320,7 @@
       validActions = validActions.filter(act => act !== 'heal');
     }
 
-    return validActions[Math.floor(Math.random() * validActions.length)];
+    return validActions[Math.floor(Math.random() * validActions.length)] || enemy.selectedSkills[0];
   }
 
   function createRoom() {
@@ -1103,7 +1335,11 @@
 
     roomRef.set({
       status: 'waiting',
-      host: { name: playerName, avatar: playerAvatar, maxHp: player.maxHp, atk: player.atk, def: player.def, spd: player.spd },
+      host: { 
+        name: playerName, avatar: playerAvatar, 
+        maxHp: player.maxHp, atk: player.atk, def: player.def, spd: player.spd,
+        selectedSkills: selectedSkills
+      },
       turn: 1
     });
 
@@ -1127,7 +1363,11 @@
 
       roomRef.update({
         status: 'playing',
-        guest: { name: playerName, avatar: playerAvatar, maxHp: player.maxHp, atk: player.atk, def: player.def, spd: player.spd }
+        guest: { 
+          name: playerName, avatar: playerAvatar, 
+          maxHp: player.maxHp, atk: player.atk, def: player.def, spd: player.spd,
+          selectedSkills: selectedSkills
+        }
       });
 
       listenRoom();
@@ -1188,6 +1428,8 @@
     player.lastAction = '';
     player.isCharged = false;
     player.isGuarding = false;
+    player.turnDamageTaken = 0;
+    player.curseTurns = 0;
 
     const oppData = (myRole === 'host') ? data.guest : data.host;
     enemy = {
@@ -1198,8 +1440,11 @@
       atk: oppData.atk,
       def: oppData.def,
       spd: oppData.spd,
-      lastAction: '', isCharged: false, isGuarding: false
+      lastAction: '', isCharged: false, isGuarding: false, turnDamageTaken: 0, curseTurns: 0,
+      selectedSkills: oppData.selectedSkills || ['attack', 'first_attack', 'heal', 'charge', 'guard', 'curse']
     };
+
+    renderBattleCommands();
 
     document.getElementById('enemy-select-area').style.display = 'none';
     document.getElementById('btn-battle-back').style.display = 'none';
@@ -1234,11 +1479,18 @@
     }
   }
 
+  function getActionPriority(cmd) {
+    const skill = SKILLS[cmd];
+    return skill ? skill.priority : 0;
+  }
+
   function applyCpuTurnResult(pCmd, cpuCmd) {
     logMsg(`<strong>--- 第 ${turnCount} ターン ---</strong>`);
+    player.turnDamageTaken = 0;
+    enemy.turnDamageTaken = 0;
 
-    const pPriority = (pCmd === 'guard') ? 1 : 0;
-    const ePriority = (cpuCmd === 'guard') ? 1 : 0;
+    const pPriority = getActionPriority(pCmd);
+    const ePriority = getActionPriority(cpuCmd);
 
     let playerFirst = false;
     if (pPriority > ePriority) playerFirst = true;
@@ -1283,12 +1535,14 @@
 
   function applyTurnResult(result) {
     logMsg(`<strong>--- 第 ${turnCount} ターン ---</strong>`);
+    player.turnDamageTaken = 0;
+    enemy.turnDamageTaken = 0;
     
     const myCmd = (myRole === 'host') ? result.hostCmd : result.guestCmd;
     const oppCmd = (myRole === 'host') ? result.guestCmd : result.hostCmd;
 
-    const pPriority = (myCmd === 'guard') ? 1 : 0;
-    const ePriority = (oppCmd === 'guard') ? 1 : 0;
+    const pPriority = getActionPriority(myCmd);
+    const ePriority = getActionPriority(oppCmd);
 
     let playerFirst = false;
     if (pPriority > ePriority) playerFirst = true;
@@ -1320,21 +1574,22 @@
 
   function processAction(actor, target, actionName, actorLabel, actorSide) {
     const targetSide = (actorSide === 'player') ? 'enemy' : 'player';
+    const skillData = SKILLS[actionName] || { name: actionName };
 
     if (actionName === 'guard') {
       actor.isGuarding = true;
-      logMsg(`${actorLabel}は **まもる** の態勢に入った！`);
+      logMsg(`${actorLabel}は **${skillData.name}** の態勢に入った！`);
       playEffect(actorSide, 'guard');
     } 
     else if (actionName === 'charge') {
       actor.isCharged = true;
-      logMsg(`${actorLabel}は **力を溜めた**！`);
+      logMsg(`${actorLabel}は **${skillData.name}**！ 力を溜めた！`);
       playEffect(actorSide, 'charge');
     } 
     else if (actionName === 'heal') {
       const healAmt = Math.max(10, Math.floor(actor.maxHp * 0.2));
       actor.hp = Math.min(actor.maxHp, actor.hp + healAmt);
-      logMsg(`${actorLabel}は **かいふく** を使った！ 体力が回復した！`);
+      logMsg(`${actorLabel}は **${skillData.name}** を使った！ 体力が回復した！`);
       playEffect(actorSide, 'heal', `+${healAmt}`, '#22c55e');
     }
     else if (actionName === 'attack') {
@@ -1345,18 +1600,54 @@
       }
 
       if (target.isGuarding) {
-        logMsg(`${actorLabel}の攻撃！...しかし相手は **まもって** いる！`);
+        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
         playEffect(targetSide, 'guard');
       } else {
         const damage = Math.max(1, baseAtk - target.def);
-        logMsg(`${actorLabel}の **こうげき**！ ダメージを与えた！`);
+        logMsg(`${actorLabel}の **${skillData.name}**！ ダメージを与えた！`);
         target.hp = Math.max(0, target.hp - damage);
+        target.turnDamageTaken += damage;
         
         playEffect(targetSide, 'slash', `-${damage}`, '#ef4444');
-        setTimeout(() => {
-          playEffect(targetSide, 'shake');
-        }, 100);
+        setTimeout(() => playEffect(targetSide, 'shake'), 100);
       }
+    }
+    else if (actionName === 'first_attack') {
+      let baseAtk = Math.floor(actor.atk * 0.7);
+      if (actor.isCharged) {
+        baseAtk *= 2;
+        actor.isCharged = false;
+      }
+
+      if (target.isGuarding) {
+        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
+        playEffect(targetSide, 'guard');
+      } else {
+        const damage = Math.max(1, baseAtk - target.def);
+        logMsg(`${actorLabel}の **${skillData.name}**！ 素早く攻撃を繰り出した！`);
+        target.hp = Math.max(0, target.hp - damage);
+        target.turnDamageTaken += damage;
+        
+        playEffect(targetSide, 'slash', `-${damage}`, '#ef4444');
+        setTimeout(() => playEffect(targetSide, 'shake'), 100);
+      }
+    }
+    else if (actionName === 'counter') {
+      if (actor.turnDamageTaken > 0) {
+        const counterDamage = actor.turnDamageTaken + actor.def;
+        logMsg(`${actorLabel}の **${skillData.name}**！ 受けた攻撃を跳ね返した！`);
+        target.hp = Math.max(0, target.hp - counterDamage);
+        
+        playEffect(targetSide, 'slash', `-${counterDamage}`, '#ef4444');
+        setTimeout(() => playEffect(targetSide, 'shake'), 100);
+      } else {
+        logMsg(`${actorLabel}の **${skillData.name}**！ しかし攻撃を受けていないため失敗した！`);
+      }
+    }
+    else if (actionName === 'curse') {
+      target.curseTurns = 5;
+      logMsg(`${actorLabel}の **${skillData.name}**！ 相手に5ターンの呪いをかけた！`);
+      playEffect(targetSide, 'slash', '💀呪い', '#8b5cf6');
     }
     
     actor.lastAction = actionName;
@@ -1366,9 +1657,29 @@
   function endTurn() {
     player.isGuarding = false;
     enemy.isGuarding = false;
+
+    // --- 毎ターン開始時／終了時の呪い継続スリップダメージ処理 ---
+    if (player.curseTurns > 0) {
+      const pCurseDmg = Math.max(1, Math.floor(player.maxHp / 16));
+      player.hp = Math.max(0, player.hp - pCurseDmg);
+      player.curseTurns--;
+      logMsg(`💀 呪いの効果！ ${playerName}の体が蝕まれる (-${pCurseDmg}) [残り${player.curseTurns}T]`);
+      playEffect('player', 'slash', `-${pCurseDmg}`, '#8b5cf6');
+    }
+
+    if (enemy.curseTurns > 0) {
+      const eCurseDmg = Math.max(1, Math.floor(enemy.maxHp / 16));
+      enemy.hp = Math.max(0, enemy.hp - eCurseDmg);
+      enemy.curseTurns--;
+      logMsg(`💀 呪いの効果！ ${enemy.name}の体が蝕まれる (-${eCurseDmg}) [残り${enemy.curseTurns}T]`);
+      playEffect('enemy', 'slash', `-${eCurseDmg}`, '#8b5cf6');
+    }
+
     updateHpDisplay();
 
-    if (enemy.hp <= 0) {
+    if (enemy.hp <= 0 && player.hp <= 0) {
+      finishBattle('draw');
+    } else if (enemy.hp <= 0) {
       finishBattle('win');
     } else if (player.hp <= 0) {
       finishBattle('lose');
@@ -1423,18 +1734,25 @@
   }
 
   function updateCmdButtons() {
-    document.getElementById('btn-guard').disabled = (player.lastAction === 'guard');
-    document.getElementById('btn-charge').disabled = (player.lastAction === 'charge');
-    document.getElementById('btn-attack').disabled = false;
-    document.getElementById('btn-heal').disabled = false;
+    selectedSkills.forEach(skillId => {
+      const btn = document.getElementById(`btn-skill-${skillId}`);
+      if (btn) {
+        if ((skillId === 'guard' && player.lastAction === 'guard') || 
+            (skillId === 'charge' && player.lastAction === 'charge')) {
+          btn.disabled = true;
+        } else {
+          btn.disabled = false;
+        }
+      }
+    });
     document.getElementById('btn-surrender').disabled = false;
   }
 
   function setAllButtonsDisabled(disabled) {
-    document.getElementById('btn-attack').disabled = disabled;
-    document.getElementById('btn-heal').disabled = disabled;
-    document.getElementById('btn-charge').disabled = disabled;
-    document.getElementById('btn-guard').disabled = disabled;
+    selectedSkills.forEach(skillId => {
+      const btn = document.getElementById(`btn-skill-${skillId}`);
+      if (btn) btn.disabled = disabled;
+    });
     document.getElementById('btn-surrender').disabled = disabled;
   }
 
@@ -1447,8 +1765,13 @@
     document.getElementById('p-hp-text').innerText = `${player.hp}/${player.maxHp}`;
     document.getElementById('e-hp-text').innerText = `${Math.ceil(ePct)}%`;
 
-    document.getElementById('p-status-buff').innerText = player.isCharged ? '🔥 攻撃力2倍' : (player.isGuarding ? '🛡️ ガード中' : '');
-    document.getElementById('e-status-buff').innerText = enemy.isCharged ? '🔥 攻撃力2倍' : (enemy.isGuarding ? '🛡️ ガード中' : '');
+    let pBuff = player.isCharged ? '🔥 攻撃力2倍 ' : (player.isGuarding ? '🛡️ ガード中 ' : '');
+    if (player.curseTurns > 0) pBuff += `💀 呪い(${player.curseTurns})`;
+    document.getElementById('p-status-buff').innerText = pBuff;
+
+    let eBuff = enemy.isCharged ? '🔥 攻撃力2倍 ' : (enemy.isGuarding ? '🛡️ ガード中 ' : '');
+    if (enemy.curseTurns > 0) eBuff += `💀 呪い(${enemy.curseTurns})`;
+    document.getElementById('e-status-buff').innerText = eBuff;
   }
 
   function logMsg(msg) {
