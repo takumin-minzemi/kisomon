@@ -489,7 +489,7 @@
     heal:         { id: 'heal',         name: '🧪 かいふく',       desc: '最大HPの20%を回復', type: 'heal', priority: 0 },
     charge:       { id: 'charge',       name: '🔥 溜める',         desc: '次の攻撃力を2倍', type: 'charge', priority: 0 },
     guard:        { id: 'guard',        name: '🛡️ まもる',         desc: '先制で攻撃を無効化', type: 'guard', priority: 2 },
-    counter:      { id: 'counter',      name: '↩️ カウンター',     desc: '後攻で受けたダメ+自分の防御力を与える', type: 'counter', priority: -1 },
+    counter:      { id: 'counter',      name: '↩️ カウンター',     desc: '後攻で受けたダメ+自分防御-相手防御のダメージを与える', type: 'counter', priority: -1 },
     curse:        { id: 'curse',        name: '💀 のろい',         desc: '5Tの間毎T1/16削る+相手に計算試練を課す', type: 'curse', priority: 0 }
   };
 
@@ -1670,7 +1670,7 @@
     else if (actionName === 'life_burst') {
       // 相手がまもっている場合は攻撃を無効化し、自傷リスクも発生させない
       if (target.isGuarding) {
-        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
+        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもして** いる！`);
         playEffect(targetSide, 'guard');
       } else {
         // 自傷処理
@@ -1679,7 +1679,7 @@
         logMsg(`${actorLabel}は **${skillData.name}** を発動！ 自身の命を削った！`);
         playEffect(actorSide, 'slash', '', '#ef4444');
 
-        // 相手の防御力を無視してダメージを与える（ログにはダメージ数値を非表示）
+        // 相手の防御力を無視してダメージを与える
         const damage = selfCost;
         logMsg(`${actorLabel}の命をかけた一撃！ 相手にダメージを与えた！`);
         target.hp = Math.max(0, target.hp - damage);
@@ -1731,7 +1731,8 @@
     }
     else if (actionName === 'counter') {
       if (actor.turnDamageTaken > 0) {
-        const counterDamage = actor.turnDamageTaken + actor.def;
+        // カウンター計算式: 受けたダメージ + 自分の防御力 - 相手の防御力
+        const counterDamage = Math.max(1, actor.turnDamageTaken + actor.def - target.def);
         logMsg(`${actorLabel}の **${skillData.name}**！ 受けた攻撃を跳ね返した！`);
         target.hp = Math.max(0, target.hp - counterDamage);
         
