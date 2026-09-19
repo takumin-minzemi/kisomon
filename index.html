@@ -69,6 +69,16 @@
     .skill-info { font-size: 13px; color: #475569; }
     .skill-title { font-weight: bold; font-size: 15px; color: #1e293b; }
 
+    /* ランキング表示用スタイル */
+    .ranking-list { text-align: left; margin: 15px 0; max-height: 300px; overflow-y: auto; }
+    .ranking-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 6px; }
+    .ranking-rank { font-weight: bold; font-size: 16px; width: 40px; color: #64748b; }
+    .ranking-rank.top-1 { color: #eab308; font-size: 18px; }
+    .ranking-rank.top-2 { color: #94a3b8; font-size: 18px; }
+    .ranking-rank.top-3 { color: #b45309; font-size: 18px; }
+    .ranking-name { font-weight: bold; flex-grow: 1; font-size: 15px; }
+    .ranking-lvl { font-weight: bold; color: #f59e0b; font-size: 16px; }
+
     .fx-shake { animation: shake 0.4s ease-in-out; }
     @keyframes shake {
       0% { transform: translateX(0); }
@@ -208,8 +218,21 @@
         <button onclick="showScreen('screen-status')">⚙️ ステータス強化</button>
         <button onclick="showScreen('screen-skills')">📖 技デッキ編集</button>
         <button onclick="showScreen('screen-battle')">⚔️ 対戦モード</button>
+        <button style="background: #f59e0b;" onclick="showScreen('screen-ranking')">🏆 レベルランキング</button>
         <button class="secondary" onclick="showScreen('screen-save')">☁️ クラウド連携・引き継ぎ</button>
       </div>
+    </div>
+
+    <!-- 1-1. レベルランキング画面 -->
+    <div id="screen-ranking" class="screen">
+      <h2>🏆 レベルランキング</h2>
+      <p style="font-size: 13px; color: #64748b;">クラウドに連携しているプレイヤーのレベルランキングです。</p>
+      
+      <div id="ranking-list-container" class="ranking-list">
+        <!-- JSでランキングを挿入 -->
+      </div>
+
+      <button class="secondary" onclick="showScreen('screen-home')">ホームへ戻る</button>
     </div>
 
     <!-- 1-2. 技デッキ編集画面 -->
@@ -460,13 +483,14 @@
 <script>
   // --- 技の定義データ ---
   const SKILLS = {
-    attack:       { id: 'attack',       name: '⚔️ こうげき',   desc: '攻撃力 - 相手の防御力', type: 'attack', priority: 0 },
-    first_attack: { id: 'first_attack', name: '⚡ 先制攻撃',   desc: '必ず先制し、攻撃力の70%-相手の防御力ダメージ', type: 'attack', priority: 1 },
-    heal:         { id: 'heal',         name: '🧪 かいふく',   desc: '最大HPの20%を回復', type: 'heal', priority: 0 },
-    charge:       { id: 'charge',       name: '🔥 溜める',     desc: '次の攻撃力を2倍', type: 'charge', priority: 0 },
-    guard:        { id: 'guard',        name: '🛡️ まもる',     desc: '先制で攻撃を無効化', type: 'guard', priority: 2 },
-    counter:      { id: 'counter',      name: '↩️ カウンター', desc: '後攻で受けたダメ+自分の防御力を与える', type: 'counter', priority: -1 },
-    curse:        { id: 'curse',        name: '💀 のろい',     desc: '5Tの間毎T1/16削る+相手に計算試練を課す', type: 'curse', priority: 0 }
+    attack:       { id: 'attack',       name: '⚔️ こうげき',       desc: '攻撃力 - 相手の防御力', type: 'attack', priority: 0 },
+    first_attack: { id: 'first_attack', name: '⚡ 先制攻撃',       desc: '必ず先制し、攻撃力の70%-相手の防御力ダメージ', type: 'attack', priority: 1 },
+    life_burst:   { id: 'life_burst',   name: '💥 ライフバースト', desc: '自分の最大HP20%を削り相手防御無視ダメージ', type: 'attack', priority: 0 },
+    heal:         { id: 'heal',         name: '🧪 かいふく',       desc: '最大HPの20%を回復', type: 'heal', priority: 0 },
+    charge:       { id: 'charge',       name: '🔥 溜める',         desc: '次の攻撃力を2倍', type: 'charge', priority: 0 },
+    guard:        { id: 'guard',        name: '🛡️ まもる',         desc: '先制で攻撃を無効化', type: 'guard', priority: 2 },
+    counter:      { id: 'counter',      name: '↩️ カウンター',     desc: '後攻で受けたダメ+自分の防御力を与える', type: 'counter', priority: -1 },
+    curse:        { id: 'curse',        name: '💀 のろい',         desc: '5Tの間毎T1/16削る+相手に計算試練を課す', type: 'curse', priority: 0 }
   };
 
   // 優先度の表記文字列を取得するヘルパー関数
@@ -514,7 +538,7 @@
 
   const BASE_STATS = { hp: 50, atk: 10, def: 5, spd: 10 };
   const player = { ...BASE_STATS, maxHp: 50, hp: 50, lastAction: '', isCharged: false, isGuarding: false, turnDamageTaken: 0, curseTurns: 0 };
-  let enemy = { name: '', avatar: '🐉', maxHp: 0, hp: 0, atk: 0, def: 0, spd: 0, lastAction: '', isCharged: false, isGuarding: false, turnDamageTaken: 0, curseTurns: 0, selectedSkills: ['attack', 'heal', 'charge', 'guard', 'curse'] };
+  let enemy = { name: '', avatar: '🐉', maxHp: 0, hp: 0, atk: 0, def: 0, spd: 0, lastAction: '', isCharged: false, isGuarding: false, turnDamageTaken: 0, curseTurns: 0, selectedSkills: ['attack', 'life_burst', 'heal', 'charge', 'guard', 'curse'] };
   let inBattle = false;
   let isCpuBattle = false;
 
@@ -569,9 +593,16 @@
   }
 
   function saveData() {
+    const usedPoints = (player.maxHp - BASE_STATS.hp) + 
+                       (player.atk - BASE_STATS.atk) + 
+                       (player.def - BASE_STATS.def) + 
+                       (player.spd - BASE_STATS.spd);
+    const calculatedLevel = usedPoints + points;
+
     const saveDataObj = {
       playerName: playerName,
       playerAvatar: playerAvatar,
+      level: calculatedLevel,
       points: points,
       pvpWins: pvpWins,
       pvpLosses: pvpLosses,
@@ -722,6 +753,49 @@
       });
   }
 
+  function loadRanking() {
+    const container = document.getElementById('ranking-list-container');
+    container.innerHTML = '<p style="color:#64748b;">読み込み中...</p>';
+
+    db.ref('users').orderByChild('level').limitToLast(10).once('value')
+      .then(snapshot => {
+        if (!snapshot.exists()) {
+          container.innerHTML = '<p style="color:#64748b;">まだランキングデータがありません。<br>クラウド連携すると登録されます！</p>';
+          return;
+        }
+
+        const users = [];
+        snapshot.forEach(child => {
+          users.push(child.val());
+        });
+
+        // 降順（レベルの高い順）に並び替え
+        users.reverse();
+
+        container.innerHTML = '';
+        users.forEach((userData, index) => {
+          const rank = index + 1;
+          const rankClass = rank <= 3 ? `top-${rank}` : '';
+          const name = userData.playerName || '勇者';
+          const avatar = userData.playerAvatar || '🧙‍♂️';
+          const lvl = userData.level !== undefined ? userData.level : 0;
+
+          const item = document.createElement('div');
+          item.className = 'ranking-item';
+          item.innerHTML = `
+            <div class="ranking-rank ${rankClass}">${rank}位</div>
+            <div class="ranking-name">${avatar} ${name}</div>
+            <div class="ranking-lvl">Lv.${lvl}</div>
+          `;
+          container.appendChild(item);
+        });
+      })
+      .catch(err => {
+        console.error("ランキング読み込みエラー:", err);
+        container.innerHTML = '<p style="color:#ef4444;">データの取得に失敗しました</p>';
+      });
+  }
+
   function selectAvatar(icon, doSave = true) {
     playerAvatar = icon;
     document.querySelectorAll('.avatar-option').forEach(el => {
@@ -744,6 +818,7 @@
     if (screenId === 'screen-battle') updateCpuLevel();
     if (screenId === 'screen-skills') renderSkillsList();
     if (screenId === 'screen-save') document.getElementById('save-msg').innerText = '';
+    if (screenId === 'screen-ranking') loadRanking();
     updateUI();
   }
 
@@ -1179,7 +1254,7 @@
     closeCurseModal();
     const dmg = Math.max(1, Math.floor(player.maxHp / 16));
     player.hp = Math.max(0, player.hp - dmg);
-    logMsg(`💀 試練失敗（${reason}）！ 呪いにより体力が <strong>${dmg}</strong> 削られた！`);
+    logMsg(`💀 試練失敗（${reason}）！ 呪いにより体力が削られた！`);
     playEffect('player', 'slash', `-${dmg}`, '#8b5cf6');
     updateHpDisplay();
 
@@ -1288,7 +1363,7 @@
       isGuarding: false,
       turnDamageTaken: 0,
       curseTurns: 0,
-      selectedSkills: ['attack', 'first_attack', 'heal', 'charge', 'guard', 'curse']
+      selectedSkills: ['attack', 'life_burst', 'heal', 'charge', 'guard', 'curse']
     };
 
     renderBattleCommands();
@@ -1592,6 +1667,28 @@
       logMsg(`${actorLabel}は **${skillData.name}** を使った！ 体力が回復した！`);
       playEffect(actorSide, 'heal', `+${healAmt}`, '#22c55e');
     }
+    else if (actionName === 'life_burst') {
+      // 相手がまもっている場合は攻撃を無効化し、自傷リスクも発生させない
+      if (target.isGuarding) {
+        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
+        playEffect(targetSide, 'guard');
+      } else {
+        // 自傷処理
+        const selfCost = Math.floor(actor.maxHp * 0.2);
+        actor.hp = Math.max(0, actor.hp - selfCost);
+        logMsg(`${actorLabel}は **${skillData.name}** を発動！ 自身の命を削った！`);
+        playEffect(actorSide, 'slash', '', '#ef4444');
+
+        // 相手の防御力を無視してダメージを与える（ログにはダメージ数値を非表示）
+        const damage = selfCost;
+        logMsg(`${actorLabel}の命をかけた一撃！ 相手にダメージを与えた！`);
+        target.hp = Math.max(0, target.hp - damage);
+        target.turnDamageTaken += damage;
+        
+        playEffect(targetSide, 'slash', `-${damage}`, '#ef4444');
+        setTimeout(() => playEffect(targetSide, 'shake'), 100);
+      }
+    }
     else if (actionName === 'attack') {
       let baseAtk = actor.atk;
       if (actor.isCharged) {
@@ -1663,7 +1760,7 @@
       const pCurseDmg = Math.max(1, Math.floor(player.maxHp / 16));
       player.hp = Math.max(0, player.hp - pCurseDmg);
       player.curseTurns--;
-      logMsg(`💀 呪いの効果！ ${playerName}の体が蝕まれる (-${pCurseDmg}) [残り${player.curseTurns}T]`);
+      logMsg(`💀 呪いの効果！ ${playerName}の体が蝕まれる [残り${player.curseTurns}T]`);
       playEffect('player', 'slash', `-${pCurseDmg}`, '#8b5cf6');
     }
 
@@ -1671,7 +1768,7 @@
       const eCurseDmg = Math.max(1, Math.floor(enemy.maxHp / 16));
       enemy.hp = Math.max(0, enemy.hp - eCurseDmg);
       enemy.curseTurns--;
-      logMsg(`💀 呪いの効果！ ${enemy.name}の体が蝕まれる (-${eCurseDmg}) [残り${enemy.curseTurns}T]`);
+      logMsg(`💀 呪いの効果！ ${enemy.name}の体が蝕まれる [残り${enemy.curseTurns}T]`);
       playEffect('enemy', 'slash', `-${eCurseDmg}`, '#8b5cf6');
     }
 
