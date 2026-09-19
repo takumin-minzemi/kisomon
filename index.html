@@ -490,7 +490,7 @@
     charge:       { id: 'charge',       name: '🔥 溜める',         desc: '次の攻撃力を2倍', type: 'charge', priority: 0 },
     guard:        { id: 'guard',        name: '🛡️ まもる',         desc: '先制で攻撃を無効化', type: 'guard', priority: 2 },
     counter:      { id: 'counter',      name: '↩️ カウンター',     desc: '後攻で受けたダメ+自分防御-相手防御のダメージを与える', type: 'counter', priority: -1 },
-    curse:        { id: 'curse',        name: '💀 のろい',         desc: '5Tの間毎T1/16削る+相手に計算試練を課す', type: 'curse', priority: 0 }
+    curse:        { id: 'curse',        name: '💀 のろい',         desc: '5Tの間毎T1/8削る+相手に計算試練を課す', type: 'curse', priority: 0 }
   };
 
   // 優先度の表記文字列を取得するヘルパー関数
@@ -1252,7 +1252,7 @@
 
   function failCurseChallenge(reason) {
     closeCurseModal();
-    const dmg = Math.max(1, Math.floor(player.maxHp / 16));
+    const dmg = Math.max(1, Math.floor(player.maxHp / 8));
     player.hp = Math.max(0, player.hp - dmg);
     logMsg(`💀 試練失敗（${reason}）！ 呪いにより体力が削られた！`);
     playEffect('player', 'slash', `-${dmg}`, '#8b5cf6');
@@ -1758,7 +1758,7 @@
 
     // --- 毎ターン開始時／終了時の呪い継続スリップダメージ処理 ---
     if (player.curseTurns > 0) {
-      const pCurseDmg = Math.max(1, Math.floor(player.maxHp / 16));
+      const pCurseDmg = Math.max(1, Math.floor(player.maxHp / 8));
       player.hp = Math.max(0, player.hp - pCurseDmg);
       player.curseTurns--;
       logMsg(`💀 呪いの効果！ ${playerName}の体が蝕まれる [残り${player.curseTurns}T]`);
@@ -1766,7 +1766,7 @@
     }
 
     if (enemy.curseTurns > 0) {
-      const eCurseDmg = Math.max(1, Math.floor(enemy.maxHp / 16));
+      const eCurseDmg = Math.max(1, Math.floor(enemy.maxHp / 8));
       enemy.hp = Math.max(0, enemy.hp - eCurseDmg);
       enemy.curseTurns--;
       logMsg(`💀 呪いの効果！ ${enemy.name}の体が蝕まれる [残り${enemy.curseTurns}T]`);
