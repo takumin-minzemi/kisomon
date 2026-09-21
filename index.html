@@ -516,6 +516,14 @@
   </div>
 
 <script>
+  // --- ログ出力関数 ---
+  function logMsg(msg) {
+    const logEl = document.getElementById('log');
+    if (!logEl) return;
+    logEl.innerHTML += `<div>${msg}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
   // --- 技の定義データ ---
   const SKILLS = {
     attack:                 { id: 'attack',                 name: '⚔️ こうげき',                 desc: '自分の攻撃力ー相手の防御力', type: 'attack', priority: 0 },
@@ -529,7 +537,7 @@
     charge:                 { id: 'charge',                 name: '🔥 溜める',                   desc: '次の攻撃力を2倍', type: 'charge', priority: 0 },
     guard:                  { id: 'guard',                  name: '🛡️ まもる',                   desc: '先制で攻撃を無効化', type: 'guard', priority: 2 },
     counter:                { id: 'counter',                name: '↩️ カウンター',               desc: '後攻で、受けたダメージ＋自分の防御力ー相手の防御力', type: 'counter', priority: -1 },
-    curse:                  { id: 'curse',                  name: '💀 のろい',                   desc: '3Tの間毎T1/8削る+相手に計算試練を課す', type: 'curse', priority: 0 },
+    curse:                  { id: 'curse',                  name: '💀 のろい',                   desc: '3ターンの間、毎ターン最大HPの1/8を削る。かつ、計算問題を与え不正解ならさらに最大HPの1/8を削る', type: 'curse', priority: 0 },
     speed_swap:             { id: 'speed_swap',             name: '🔀 スピードスワップ',         desc: '3ターンの間、自分と相手の素早さを入れかえる', type: 'swap', priority: 0 },
     power_swap:             { id: 'power_swap',             name: '🔀 パワースワップ',           desc: '3ターンの間、自分と相手の攻撃力を入れかえる', type: 'swap', priority: 0 },
     guard_swap:             { id: 'guard_swap',             name: '🔀 ガードスワップ',           desc: '3ターンの間、自分と相手の防御力を入れかえる', type: 'swap', priority: 0 },
@@ -635,7 +643,7 @@
   let holdTimeout = null;
   let holdInterval = null;
 
-  // トレーニングレベルごとの獲得ポイント定義 (1: 1PT, 2: 5PT, 3: 2PT, 4: 6PT, 5: 5PT, 6: 10PT)
+  // トレーニングレベルごとの獲得ポイント定義
   const LEVEL_POINTS = { 1: 1, 2: 5, 3: 2, 4: 6, 5: 5, 6: 10 };
 
   // 現在の年月（YYYY-MM）を取得するヘルパー関数
@@ -704,14 +712,12 @@
     }
 
     if (lastResetMonth !== currentMonth) {
-      // リセット前レベル算出
       const usedPoints = (player.maxHp - BASE_STATS.hp) + 
                          (player.atk - BASE_STATS.atk) + 
                          (player.def - BASE_STATS.def) + 
                          (player.spd - BASE_STATS.spd);
       const finalLevel = usedPoints + points;
 
-      // 前月の最終記録として保存
       monthlyHistory.unshift({
         month: lastResetMonth,
         level: finalLevel,
@@ -720,7 +726,6 @@
         draws: pvpDraws
       });
 
-      // ポイント・ステータス・月間戦績をリセット
       points = 0;
       pvpWins = 0;
       pvpLosses = 0;
@@ -955,7 +960,6 @@
       });
   }
 
-  // 月ごとの最終レベル履歴の一覧表示
   function renderHistoryList() {
     const container = document.getElementById('history-list-container');
     if (!monthlyHistory || monthlyHistory.length === 0) {
@@ -1540,7 +1544,7 @@
     closeCurseModal();
     const dmg = Math.max(1, Math.floor(player.maxHp / 8));
     player.hp = Math.max(0, player.hp - dmg);
-    logMsg(`💀 試練失敗（${reason}）！ 呪いにより体力が削られた！`);
+    logMsg(`💀 試練失敗（${reason}）！ 呪いにより体力がさらに削られた！`);
     playEffect('player', 'slash', '', '#8b5cf6');
     updateHpDisplay();
 
@@ -1983,7 +1987,7 @@
     }
     else if (actionName === 'life_burst') {
       if (target.isGuarding) {
-        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
+        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもして** いる！`);
         playEffect(targetSide, 'guard');
       } else {
         const selfCost = Math.floor(actor.maxHp * 0.2);
@@ -2191,7 +2195,10 @@
   function endTurn() {
     [player, enemy].forEach(unit => {
       if (unit.curseTurns > 0) {
+        const curseDmg = Math.max(1, Math.floor(unit.maxHp / 8));
+        unit.hp = Math.max(0, unit.hp - curseDmg);
         unit.curseTurns--;
+        logMsg(`${unit === player ? playerName : enemy.name}は 呪いにより最大HPの1/8が削られた！`);
       }
       if (unit.regenTurns > 0) {
         const healAmt = Math.max(5, Math.floor(unit.maxHp * 0.1));
@@ -2256,6 +2263,13 @@
     }
   }
 
+  function resetBattleUI() {
+    document.getElementById('battle-area').style.display = 'none';
+    document.getElementById('enemy-select-area').style.display = 'block';
+    document.getElementById('btn-battle-back').style.display = 'inline-block';
+    leaveRoom();
+  }
+
   function setAllButtonsDisabled(disabled) {
     selectedSkills.forEach(skillId => {
       const btn = document.getElementById(`btn-skill-${skillId}`);
@@ -2286,11 +2300,8 @@
     const ePct = Math.max(0, Math.floor((enemy.hp / enemy.maxHp) * 100));
     document.getElementById('e-hp-bar').style.width = ePct + '%';
     
-    if (isCpuBattle) {
-      document.getElementById('e-hp-text').innerText = `${enemy.hp}/${enemy.maxHp}`;
-    } else {
-      document.getElementById('e-hp-text').innerText = `${ePct}%`;
-    }
+    // CPU戦・対人戦を問わず、相手のHP表記を常に%表示に設定
+    document.getElementById('e-hp-text').innerText = `${ePct}%`;
 
     let pBuffs = [];
     if (player.isCharged) pBuffs.push('🔥溜め');
@@ -2323,28 +2334,9 @@
     document.getElementById('e-status-buff').innerText = eBuffs.join(' ');
   }
 
-  function logMsg(msg) {
-    const logEl = document.getElementById('log');
-    logEl.innerHTML += `<div>${msg}</div>`;
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function resetBattleUI() {
-    leaveRoom();
-    document.getElementById('enemy-select-area').style.display = 'block';
-    document.getElementById('btn-battle-back').style.display = 'block';
-    document.getElementById('battle-area').style.display = 'none';
-    document.getElementById('log').innerHTML = '';
-  }
-
-  window.onload = function() {
-    loadLocal();
-    const savedCloudId = localStorage.getItem('kisomon_cloud_id');
-    if (savedCloudId) {
-      document.getElementById('cloud-id-input').value = savedCloudId;
-    }
-    updateUI();
-  };
+  // 初回読み込み時のデータロードとUI更新
+  loadLocal();
+  updateUI();
 </script>
 </body>
 </html>
