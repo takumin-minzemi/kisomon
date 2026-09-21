@@ -306,7 +306,7 @@
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(2)" id="lvl-btn-2">
           🌿 <strong>トレーニング 2</strong><br>
-          <span style="font-size: 12px; color: #64748b;">加法、減法、乗法（1問につき <b>4 PT</b>）</span>
+          <span style="font-size: 12px; color: #64748b;">加法、減法、乗法（1問につき <b>5 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(3)" id="lvl-btn-3">
@@ -316,17 +316,17 @@
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(4)" id="lvl-btn-4">
           🔥 <strong>トレーニング 4</strong><br>
-          <span style="font-size: 12px; color: #64748b;">正負の加法、減法、乗法（1問につき <b>5 PT</b>）</span>
+          <span style="font-size: 12px; color: #64748b;">正負の加法、減法、乗法（1問につき <b>6 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(5)" id="lvl-btn-5">
           📐 <strong>トレーニング 5</strong><br>
-          <span style="font-size: 12px; color: #64748b;">1次方程式（1問につき <b>4 PT</b>）</span>
+          <span style="font-size: 12px; color: #64748b;">1次方程式（1問につき <b>5 PT</b>）</span>
         </button>
 
         <button type="button" class="lvl-btn" onclick="selectTrainingLevel(6)" id="lvl-btn-6">
           🌌 <strong>トレーニング 6</strong><br>
-          <span style="font-size: 12px; color: #64748b;">1次方程式（1問につき <b>7 PT</b>）</span>
+          <span style="font-size: 12px; color: #64748b;">1次方程式（1問につき <b>10 PT</b>）</span>
         </button>
       </div>
 
@@ -635,8 +635,8 @@
   let holdTimeout = null;
   let holdInterval = null;
 
-  // トレーニングレベルごとの獲得ポイント定義 (1: 1PT, 2: 4PT, 3: 2PT, 4: 5PT, 5: 4PT, 6: 7PT)
-  const LEVEL_POINTS = { 1: 1, 2: 4, 3: 2, 4: 5, 5: 4, 6: 7 };
+  // トレーニングレベルごとの獲得ポイント定義 (1: 1PT, 2: 5PT, 3: 2PT, 4: 6PT, 5: 5PT, 6: 10PT)
+  const LEVEL_POINTS = { 1: 1, 2: 5, 3: 2, 4: 6, 5: 5, 6: 10 };
 
   // 現在の年月（YYYY-MM）を取得するヘルパー関数
   function getCurrentYearMonth() {
@@ -2169,79 +2169,43 @@
       playEffect(actorSide, 'charge', '⬆️防御', '#22c55e');
     }
     else if (actionName === 'speed_down') {
-      if (target.isGuarding) {
-        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
-        playEffect(targetSide, 'guard');
-      } else {
-        target.spdDownCount++;
-        logMsg(`${actorLabel}の **${skillData.name}**！ 相手の素早さが低下した！`);
-        playEffect(targetSide, 'slash', '⬇️素早さ', '#ef4444');
-      }
+      target.spdDownCount++;
+      logMsg(`${actorLabel}の **${skillData.name}**！ 相手の素早さがダウンした！`);
+      playEffect(targetSide, 'charge', '⬇️素早さ', '#ef4444');
     }
     else if (actionName === 'power_down') {
-      if (target.isGuarding) {
-        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
-        playEffect(targetSide, 'guard');
-      } else {
-        target.atkDownCount++;
-        logMsg(`${actorLabel}の **${skillData.name}**！ 相手の攻撃力が低下した！`);
-        playEffect(targetSide, 'slash', '⬇️攻撃', '#ef4444');
-      }
+      target.atkDownCount++;
+      logMsg(`${actorLabel}の **${skillData.name}**！ 相手の攻撃力がダウンした！`);
+      playEffect(targetSide, 'charge', '⬇️攻撃', '#ef4444');
     }
     else if (actionName === 'guard_down') {
-      if (target.isGuarding) {
-        logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
-        playEffect(targetSide, 'guard');
-      } else {
-        target.defDownCount++;
-        logMsg(`${actorLabel}の **${skillData.name}**！ 相手の防御力が低下した！`);
-        playEffect(targetSide, 'slash', '⬇️防御', '#ef4444');
-      }
+      target.defDownCount++;
+      logMsg(`${actorLabel}の **${skillData.name}**！ 相手の防御力がダウンした！`);
+      playEffect(targetSide, 'charge', '⬇️防御', '#ef4444');
     }
-    
+
     actor.lastAction = actionName;
     updateHpDisplay();
   }
 
   function endTurn() {
+    [player, enemy].forEach(unit => {
+      if (unit.curseTurns > 0) {
+        unit.curseTurns--;
+      }
+      if (unit.regenTurns > 0) {
+        const healAmt = Math.max(5, Math.floor(unit.maxHp * 0.1));
+        unit.hp = Math.min(unit.maxHp, unit.hp + healAmt);
+        unit.regenTurns--;
+        logMsg(`${unit === player ? playerName : enemy.name}は リジェネでHPが回復した！`);
+      }
+      if (unit.swapAtkTurns > 0) unit.swapAtkTurns--;
+      if (unit.swapDefTurns > 0) unit.swapDefTurns--;
+      if (unit.swapSpdTurns > 0) unit.swapSpdTurns--;
+    });
+
     player.isGuarding = false;
     enemy.isGuarding = false;
-
-    // スワップターンの処理
-    [player, enemy].forEach(u => {
-      if (u.swapAtkTurns > 0) { u.swapAtkTurns--; if (u.swapAtkTurns === 0) logMsg(`${u === player ? playerName : enemy.name}の攻撃力スワップが解除された！`); }
-      if (u.swapDefTurns > 0) { u.swapDefTurns--; if (u.swapDefTurns === 0) logMsg(`${u === player ? playerName : enemy.name}の防御力スワップが解除された！`); }
-      if (u.swapSpdTurns > 0) { u.swapSpdTurns--; if (u.swapSpdTurns === 0) logMsg(`${u === player ? playerName : enemy.name}の素早さスワップが解除された！`); }
-    });
-
-    // リジェネの処理
-    [player, enemy].forEach(u => {
-      if (u.regenTurns > 0 && u.hp > 0) {
-        const regenAmt = Math.max(1, Math.floor(u.maxHp * 0.1));
-        u.hp = Math.min(u.maxHp, u.hp + regenAmt);
-        u.regenTurns--;
-        const side = u === player ? 'player' : 'enemy';
-        const name = u === player ? playerName : enemy.name;
-        logMsg(`💖 リジェネの効果！ ${name}の体が回復した [残り${u.regenTurns}T]`);
-        playEffect(side, 'heal', '', '#22c55e');
-      }
-    });
-
-    if (player.curseTurns > 0 && player.hp > 0) {
-      const pCurseDmg = Math.max(1, Math.floor(player.maxHp / 8));
-      player.hp = Math.max(0, player.hp - pCurseDmg);
-      player.curseTurns--;
-      logMsg(`💀 呪いの効果！ ${playerName}の体が蝕まれる [残り${player.curseTurns}T]`);
-      playEffect('player', 'slash', '', '#8b5cf6');
-    }
-
-    if (enemy.curseTurns > 0 && enemy.hp > 0) {
-      const eCurseDmg = Math.max(1, Math.floor(enemy.maxHp / 8));
-      enemy.hp = Math.max(0, enemy.hp - eCurseDmg);
-      enemy.curseTurns--;
-      logMsg(`💀 呪いの効果！ ${enemy.name}の体が蝕まれる [残り${enemy.curseTurns}T]`);
-      playEffect('enemy', 'slash', '', '#8b5cf6');
-    }
 
     updateHpDisplay();
 
@@ -2264,121 +2228,121 @@
 
     if (!isCpuBattle) {
       if (result === 'win') pvpWins++;
-      if (result === 'lose') pvpLosses++;
-      if (result === 'draw') pvpDraws++;
+      else if (result === 'lose') pvpLosses++;
+      else if (result === 'draw') pvpDraws++;
       saveData();
-      updateUI();
     }
 
-    setTimeout(() => {
-      leaveRoom();
-      if (result === 'win') {
-        document.getElementById('win-enemy-name').innerText = enemy.name;
-        showScreen('screen-win');
-      } else if (result === 'lose') {
-        document.getElementById('lose-enemy-name').innerText = enemy.name;
-        showScreen('screen-lose');
-      } else {
-        alert('引き分け！');
-        resetBattleUI();
-        showScreen('screen-battle');
-      }
-    }, 1200);
+    if (result === 'win') {
+      document.getElementById('win-enemy-name').innerText = enemy.name;
+      showScreen('screen-win');
+    } else if (result === 'lose') {
+      document.getElementById('lose-enemy-name').innerText = enemy.name;
+      showScreen('screen-lose');
+    } else {
+      alert('引き分けです！');
+      resetBattleUI();
+      showScreen('screen-battle');
+    }
   }
 
   function surrender() {
     if (!inBattle) return;
     if (confirm('本当に降参しますか？')) {
-      stopBattleTimers();
       if (!isCpuBattle && roomRef) {
         roomRef.update({ surrender: myRole });
       }
-      logMsg('🏳️ 降参しました。');
       finishBattle('lose');
     }
   }
 
   function setAllButtonsDisabled(disabled) {
-    selectedSkills.forEach(sId => {
-      const btn = document.getElementById(`btn-skill-${sId}`);
+    selectedSkills.forEach(skillId => {
+      const btn = document.getElementById(`btn-skill-${skillId}`);
       if (btn) btn.disabled = disabled;
     });
+    document.getElementById('btn-surrender').disabled = disabled;
   }
 
   function updateCmdButtons() {
-    selectedSkills.forEach(sId => {
-      const btn = document.getElementById(`btn-skill-${sId}`);
+    selectedSkills.forEach(skillId => {
+      const btn = document.getElementById(`btn-skill-${skillId}`);
       if (!btn) return;
-      btn.disabled = false;
+      
+      let isDisabled = false;
+      if (skillId === 'guard' && player.lastAction === 'guard') isDisabled = true;
+      if (skillId === 'charge' && player.lastAction === 'charge') isDisabled = true;
 
-      if (sId === 'guard' && player.lastAction === 'guard') {
-        btn.disabled = true;
-      }
-      if (sId === 'charge' && player.lastAction === 'charge') {
-        btn.disabled = true;
-      }
+      btn.disabled = isDisabled;
     });
+    document.getElementById('btn-surrender').disabled = false;
   }
 
   function updateHpDisplay() {
-    const pHpRatio = Math.max(0, (player.hp / player.maxHp) * 100);
-    const eHpRatio = Math.max(0, (enemy.hp / enemy.maxHp) * 100);
-
-    document.getElementById('p-hp-bar').style.width = `${pHpRatio}%`;
+    const pPct = Math.max(0, Math.floor((player.hp / player.maxHp) * 100));
+    document.getElementById('p-hp-bar').style.width = pPct + '%';
     document.getElementById('p-hp-text').innerText = `${player.hp}/${player.maxHp}`;
 
-    document.getElementById('e-hp-bar').style.width = `${eHpRatio}%`;
-    document.getElementById('e-hp-text').innerText = isCpuBattle ? `${enemy.hp}/${enemy.maxHp}` : `${Math.ceil(eHpRatio)}%`;
+    const ePct = Math.max(0, Math.floor((enemy.hp / enemy.maxHp) * 100));
+    document.getElementById('e-hp-bar').style.width = ePct + '%';
+    
+    if (isCpuBattle) {
+      document.getElementById('e-hp-text').innerText = `${enemy.hp}/${enemy.maxHp}`;
+    } else {
+      document.getElementById('e-hp-text').innerText = `${ePct}%`;
+    }
 
-    let pStatusText = [];
-    if (player.isCharged) pStatusText.push('🔥溜め');
-    if (player.curseTurns > 0) pStatusText.push(`💀のろい(${player.curseTurns})`);
-    if (player.regenTurns > 0) pStatusText.push(`💖リジェネ(${player.regenTurns})`);
-    if (player.atkUpCount > 0) pStatusText.push(`⬆️攻+${player.atkUpCount}`);
-    if (player.atkDownCount > 0) pStatusText.push(`⬇️攻-${player.atkDownCount}`);
-    if (player.defUpCount > 0) pStatusText.push(`⬆️防+${player.defUpCount}`);
-    if (player.defDownCount > 0) pStatusText.push(`⬇️防-${player.defDownCount}`);
-    if (player.spdUpCount > 0) pStatusText.push(`⬆️速+${player.spdUpCount}`);
-    if (player.spdDownCount > 0) pStatusText.push(`⬇️速-${player.spdDownCount}`);
-    if (player.swapAtkTurns > 0) pStatusText.push(`🔀攻スワップ(${player.swapAtkTurns})`);
-    if (player.swapDefTurns > 0) pStatusText.push(`🔀防スワップ(${player.swapDefTurns})`);
-    if (player.swapSpdTurns > 0) pStatusText.push(`🔀速スワップ(${player.swapSpdTurns})`);
-    document.getElementById('p-status-buff').innerText = pStatusText.join(' ');
+    let pBuffs = [];
+    if (player.isCharged) pBuffs.push('🔥溜め');
+    if (player.curseTurns > 0) pBuffs.push(`💀呪い(${player.curseTurns})`);
+    if (player.regenTurns > 0) pBuffs.push(`💖回復(${player.regenTurns})`);
+    if (player.swapAtkTurns > 0) pBuffs.push(`🔀攻換(${player.swapAtkTurns})`);
+    if (player.swapDefTurns > 0) pBuffs.push(`🔀防換(${player.swapDefTurns})`);
+    if (player.swapSpdTurns > 0) pBuffs.push(`🔀速換(${player.swapSpdTurns})`);
+    if (player.atkUpCount > 0) pBuffs.push(`⬆️攻x${player.atkUpCount}`);
+    if (player.defUpCount > 0) pBuffs.push(`⬆️防x${player.defUpCount}`);
+    if (player.spdUpCount > 0) pBuffs.push(`⬆️速x${player.spdUpCount}`);
+    if (player.atkDownCount > 0) pBuffs.push(`⬇️攻x${player.atkDownCount}`);
+    if (player.defDownCount > 0) pBuffs.push(`⬇️防x${player.defDownCount}`);
+    if (player.spdDownCount > 0) pBuffs.push(`⬇️速x${player.spdDownCount}`);
+    document.getElementById('p-status-buff').innerText = pBuffs.join(' ');
 
-    let eStatusText = [];
-    if (enemy.isCharged) eStatusText.push('🔥溜め');
-    if (enemy.curseTurns > 0) eStatusText.push(`💀のろい(${enemy.curseTurns})`);
-    if (enemy.regenTurns > 0) eStatusText.push(`💖リジェネ(${enemy.regenTurns})`);
-    if (enemy.atkUpCount > 0) eStatusText.push(`⬆️攻+${enemy.atkUpCount}`);
-    if (enemy.atkDownCount > 0) eStatusText.push(`⬇️攻-${enemy.atkDownCount}`);
-    if (enemy.defUpCount > 0) eStatusText.push(`⬆️防+${enemy.defUpCount}`);
-    if (enemy.defDownCount > 0) eStatusText.push(`⬇️防-${enemy.defDownCount}`);
-    if (enemy.spdUpCount > 0) eStatusText.push(`⬆️速+${enemy.spdUpCount}`);
-    if (enemy.spdDownCount > 0) eStatusText.push(`⬇️速-${enemy.spdDownCount}`);
-    if (enemy.swapAtkTurns > 0) eStatusText.push(`🔀攻スワップ(${enemy.swapAtkTurns})`);
-    if (enemy.swapDefTurns > 0) eStatusText.push(`🔀防スワップ(${enemy.swapDefTurns})`);
-    if (enemy.swapSpdTurns > 0) eStatusText.push(`🔀速スワップ(${enemy.swapSpdTurns})`);
-    document.getElementById('e-status-buff').innerText = eStatusText.join(' ');
+    let eBuffs = [];
+    if (enemy.isCharged) eBuffs.push('🔥溜め');
+    if (enemy.curseTurns > 0) eBuffs.push(`💀呪い(${enemy.curseTurns})`);
+    if (enemy.regenTurns > 0) eBuffs.push(`💖回復(${enemy.regenTurns})`);
+    if (enemy.swapAtkTurns > 0) eBuffs.push(`🔀攻換(${enemy.swapAtkTurns})`);
+    if (enemy.swapDefTurns > 0) eBuffs.push(`🔀防換(${enemy.swapDefTurns})`);
+    if (enemy.swapSpdTurns > 0) eBuffs.push(`🔀速換(${enemy.swapSpdTurns})`);
+    if (enemy.atkUpCount > 0) eBuffs.push(`⬆️攻x${enemy.atkUpCount}`);
+    if (enemy.defUpCount > 0) eBuffs.push(`⬆️防x${enemy.defUpCount}`);
+    if (enemy.spdUpCount > 0) eBuffs.push(`⬆️速x${enemy.spdUpCount}`);
+    if (enemy.atkDownCount > 0) eBuffs.push(`⬇️攻x${enemy.atkDownCount}`);
+    if (enemy.defDownCount > 0) eBuffs.push(`⬇️防x${enemy.defDownCount}`);
+    if (enemy.spdDownCount > 0) eBuffs.push(`⬇️速x${enemy.spdDownCount}`);
+    document.getElementById('e-status-buff').innerText = eBuffs.join(' ');
   }
 
   function logMsg(msg) {
     const logEl = document.getElementById('log');
-    if (logEl) {
-      logEl.innerHTML += `<div>${msg}</div>`;
-      logEl.scrollTop = logEl.scrollHeight;
-    }
+    logEl.innerHTML += `<div>${msg}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
   }
 
   function resetBattleUI() {
+    leaveRoom();
     document.getElementById('enemy-select-area').style.display = 'block';
-    document.getElementById('battle-area').style.display = 'none';
     document.getElementById('btn-battle-back').style.display = 'block';
+    document.getElementById('battle-area').style.display = 'none';
     document.getElementById('log').innerHTML = '';
   }
 
-  // --- 初期化処理 ---
   window.onload = function() {
     loadLocal();
+    const savedCloudId = localStorage.getItem('kisomon_cloud_id');
+    if (savedCloudId) {
+      document.getElementById('cloud-id-input').value = savedCloudId;
+    }
     updateUI();
   };
 </script>
