@@ -555,8 +555,8 @@
   const AVATAR_DATA = {
     '🧙‍♂️': { name: '魔法使い', abilityName: '高速詠唱', desc: '変化技の優先度を＋１する。' },
     '🥷': { name: '忍者', abilityName: '神出鬼没', desc: '毎ターン20％の確率で相手の技を回避する。' },
-    '😈': { name: '悪魔', abilityName: '悪魔の契り', desc: '相手にかける「のろい」のターンが５ターン、解呪の制限時間が1秒になる。バトル開始時相手を「のろい」にする。' },
-    '🤖': { name: 'ロボット', abilityName: '堅牢装甲', desc: 'HPが最大の時、必ず１耐える。' },
+    '😈': { name: '悪魔', abilityName: '悪魔の契り', desc: '解呪の制限時間が1秒になる。バトル開始時相手を「のろい」にする。' },
+    '🤖': { name: 'ロボット', abilityName: '堅牢装甲', desc: 'HPが75%以上の時、必ず１耐える。' },
     '🐱': { name: 'キャット', abilityName: 'きまぐれ', desc: '毎ターン20％の確率で素早さと優先度に関係なく、相手より先に行動する。' },
     '🐉': { name: 'ドラゴン', abilityName: '竜の威圧', desc: '毎ターン20％の確率で相手は技が出せなくなる。' }
   };
@@ -1724,10 +1724,10 @@
 
     // 😈 悪魔の契り: バトル開始時に相手を「のろい」にする
     if (player.avatar === '😈') {
-      enemy.curseTurns = 5;
+      enemy.curseTurns = 3;
     }
     if (enemy.avatar === '😈') {
-      player.curseTurns = 5;
+      player.curseTurns = 3;
     }
 
     renderBattleCommands();
@@ -1896,10 +1896,10 @@
 
     // 😈 悪魔の契り: バトル開始時に相手を「のろい」にする
     if (player.avatar === '😈') {
-      enemy.curseTurns = 5;
+      enemy.curseTurns = 3;
     }
     if (enemy.avatar === '😈') {
-      player.curseTurns = 5;
+      player.curseTurns = 3;
     }
 
     renderBattleCommands();
@@ -2151,8 +2151,8 @@
         let damage = Math.max(1, selfCost);
         logMsg(`${actorLabel}の命をかけた一撃！ 防御無視ダメージを与えた！`);
 
-        // 🤖 ロボット【堅牢装甲】: HPが最大の時、必ず1耐える
-        if (target.avatar === '🤖' && target.hp === target.maxHp && damage >= target.hp) {
+        // 🤖 ロボット【堅牢装甲】: HPが75%以上の時、必ず1耐える
+        if (target.avatar === '🤖' && (target.hp / target.maxHp) >= 0.75 && damage >= target.hp) {
           target.hp = 1;
           logMsg(`🤖 【堅牢装甲】発動！ ダメージを耐え、HP1で残った！`);
         } else {
@@ -2194,8 +2194,8 @@
 
         logMsg(`${actorLabel}の **${skillData.name}**！ ダメージを与えた！`);
 
-        // 🤖 ロボット【堅牢装甲】: HPが最大の時、必ず1耐える
-        if (target.avatar === '🤖' && target.hp === target.maxHp && damage >= target.hp) {
+        // 🤖 ロボット【堅牢装甲】: HPが75%以上の時、必ず1耐える
+        if (target.avatar === '🤖' && (target.hp / target.maxHp) >= 0.75 && damage >= target.hp) {
           target.hp = 1;
           logMsg(`🤖 【堅牢装甲】発動！ ダメージを耐え、HP1で残った！`);
         } else {
@@ -2217,7 +2217,7 @@
         if (isSuccess) {
           logMsg(`${actorLabel}の **${skillData.name}**！ 神がかったカードが揃った！ 一撃必殺！`);
           
-          if (target.avatar === '🤖' && target.hp === target.maxHp) {
+          if (target.avatar === '🤖' && (target.hp / target.maxHp) >= 0.75) {
             target.hp = 1;
             logMsg(`🤖 【堅牢装甲】発動！ 一撃必殺を耐え、HP1で残った！`);
           } else {
@@ -2240,7 +2240,7 @@
 
         logMsg(`${actorLabel}の **${skillData.name}**！ 受けた攻撃を跳ね返した！`);
 
-        if (target.avatar === '🤖' && target.hp === target.maxHp && counterDamage >= target.hp) {
+        if (target.avatar === '🤖' && (target.hp / target.maxHp) >= 0.75 && counterDamage >= target.hp) {
           target.hp = 1;
           logMsg(`🤖 【堅牢装甲】発動！ カウンターを耐え、HP1で残った！`);
         } else {
@@ -2258,10 +2258,8 @@
         logMsg(`${actorLabel}の **${skillData.name}**！ ...しかし相手は **まもって** いる！`);
         playEffect(targetSide, 'guard');
       } else {
-        // 😈 悪魔【悪魔の契り】: 相手にかける「のろい」のターンが５ターン
-        const curseDur = (actor.avatar === '😈') ? 5 : 3;
-        target.curseTurns = curseDur;
-        logMsg(`${actorLabel}の **${skillData.name}**！ 相手に${curseDur}ターンの呪いをかけた！`);
+        target.curseTurns = 3;
+        logMsg(`${actorLabel}の **${skillData.name}**！ 相手に3ターンの呪いをかけた！`);
         playEffect(targetSide, 'slash', '💀呪い', '#8b5cf6');
       }
     }
@@ -2299,7 +2297,7 @@
         const curseDmg = Math.max(1, Math.floor(unit.maxHp / 8));
         
         // 🤖 ロボット【堅牢装甲】
-        if (unit.avatar === '🤖' && unit.hp === unit.maxHp && curseDmg >= unit.hp) {
+        if (unit.avatar === '🤖' && (unit.hp / unit.maxHp) >= 0.75 && curseDmg >= unit.hp) {
           unit.hp = 1;
           logMsg(`🤖 【堅牢装甲】発動！ 呪いダメージを耐え、HP1で残った！`);
         } else {
