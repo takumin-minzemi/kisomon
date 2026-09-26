@@ -558,7 +558,7 @@
     '😈': { name: '悪魔', abilityName: '悪魔の契り', desc: '解呪の制限時間が1秒になる。バトル開始時相手を「のろい」にする。' },
     '🤖': { name: 'ロボット', abilityName: '堅牢装甲', desc: 'HPが75%以上の時、必ず１耐える。' },
     '🐱': { name: 'キャット', abilityName: 'きまぐれ', desc: '毎ターン20％の確率で素早さと優先度に関係なく、相手より先に行動する。' },
-    '🐉': { name: 'ドラゴン', abilityName: '竜の威圧', desc: '毎ターン20％の確率で相手は技が出せなくなる。' }
+    '🐲': { name: 'ドラゴン', abilityName: '竜の威圧', desc: '毎ターン20％の確率で相手は技が出せなくなる。' }
   };
 
   // --- 技の定義データ ---
@@ -1960,10 +1960,6 @@
     let pCatWhim = (player.avatar === '🐱' && Math.random() < 0.20);
     let eCatWhim = (enemy.avatar === '🐱' && Math.random() < 0.20);
 
-    // 🐲 ドラゴン【竜の威圧】判定
-    let pDragonBlock = (enemy.avatar === '🐲' && Math.random() < 0.20);
-    let eDragonBlock = (player.avatar === '🐲' && Math.random() < 0.20);
-
     let pPriority = pCatWhim ? 999 : getActionPriority(pCmd, player);
     let ePriority = eCatWhim ? 999 : getActionPriority(cpuCmd, enemy);
 
@@ -1979,39 +1975,40 @@
       playerFirst = pSpd >= eSpd;
     }
 
-    if (playerFirst) {
-      if (pDragonBlock) {
+    // 🐲 行動実行ヘルパー関数（修正：主語を正しく設定）
+    const executePlayerAction = () => {
+      // 相手（enemy）がドラゴンなら自分が20%で行動不能
+      if (enemy.avatar === '🐲' && Math.random() < 0.20) {
         logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
       } else {
         processAction(player, enemy, pCmd, playerName, 'player');
       }
+    };
 
+    const executeEnemyAction = () => {
+      // 自分（player）がドラゴンなら相手が20%で行動不能
+      if (player.avatar === '🐲' && Math.random() < 0.20) {
+        logMsg(`🐲 【竜の威圧】を発動！ ${enemy.name} は威圧されて技が出せない！`);
+      } else {
+        processAction(enemy, player, cpuCmd, enemy.name, 'enemy');
+      }
+    };
+
+    if (playerFirst) {
+      executePlayerAction();
       if (enemy.hp > 0) {
         setTimeout(() => {
-          if (eDragonBlock) {
-            logMsg(`🐲 【竜の威圧】を受けた！ ${enemy.name} は威圧されて技が出せない！`);
-          } else {
-            processAction(enemy, player, cpuCmd, enemy.name, 'enemy');
-          }
+          executeEnemyAction();
           endTurn();
         }, 1000);
       } else {
         endTurn();
       }
     } else {
-      if (eDragonBlock) {
-        logMsg(`🐲 【竜の威圧】を受けた！ ${enemy.name} は威圧されて技が出せない！`);
-      } else {
-        processAction(enemy, player, cpuCmd, enemy.name, 'enemy');
-      }
-
+      executeEnemyAction();
       if (player.hp > 0) {
         setTimeout(() => {
-          if (pDragonBlock) {
-            logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
-          } else {
-            processAction(player, enemy, pCmd, playerName, 'player');
-          }
+          executePlayerAction();
           endTurn();
         }, 1000);
       } else {
@@ -2045,10 +2042,6 @@
     let pCatWhim = (player.avatar === '🐱' && Math.random() < 0.20);
     let eCatWhim = (enemy.avatar === '🐱' && Math.random() < 0.20);
 
-    // 🐲 ドラゴン【竜の威圧】判定
-    let pDragonBlock = (enemy.avatar === '🐲' && Math.random() < 0.20);
-    let eDragonBlock = (player.avatar === '🐲' && Math.random() < 0.20);
-
     let pPriority = pCatWhim ? 999 : getActionPriority(myCmd, player);
     let ePriority = eCatWhim ? 999 : getActionPriority(oppCmd, enemy);
 
@@ -2064,39 +2057,38 @@
       playerFirst = pSpd >= eSpd;
     }
 
-    if (playerFirst) {
-      if (pDragonBlock) {
+    // 🐲 行動実行ヘルパー関数（修正：主語を正しく設定）
+    const executePlayerAction = () => {
+      if (enemy.avatar === '🐲' && Math.random() < 0.20) {
         logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
       } else {
         processAction(player, enemy, myCmd, playerName, 'player');
       }
+    };
 
+    const executeEnemyAction = () => {
+      if (player.avatar === '🐲' && Math.random() < 0.20) {
+        logMsg(`🐲 【竜の威圧】を発動！ ${enemy.name} は威圧されて技が出せない！`);
+      } else {
+        processAction(enemy, player, oppCmd, enemy.name, 'enemy');
+      }
+    };
+
+    if (playerFirst) {
+      executePlayerAction();
       if (enemy.hp > 0) {
         setTimeout(() => {
-          if (eDragonBlock) {
-            logMsg(`🐲 【竜の威圧】を受けた！ ${enemy.name} は威圧されて技が出せない！`);
-          } else {
-            processAction(enemy, player, oppCmd, enemy.name, 'enemy');
-          }
+          executeEnemyAction();
           endTurn();
         }, 1000);
       } else {
         endTurn();
       }
     } else {
-      if (eDragonBlock) {
-        logMsg(`🐲 【竜の威圧】を受けた！ ${enemy.name} は威圧されて技が出せない！`);
-      } else {
-        processAction(enemy, player, oppCmd, enemy.name, 'enemy');
-      }
-
+      executeEnemyAction();
       if (player.hp > 0) {
         setTimeout(() => {
-          if (pDragonBlock) {
-            logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
-          } else {
-            processAction(player, enemy, myCmd, playerName, 'player');
-          }
+          executePlayerAction();
           endTurn();
         }, 1000);
       } else {
