@@ -216,7 +216,7 @@
         <!-- 現在の選択キャラクター情報表示エリア -->
         <div style="background: #ffffff; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 8px; text-align: left;">
-            <span id="home-avatar-display" style="font-size: 32px;">🧙‍♂️</span>
+            <span id="home-avatar-display" style="font-size: 32px;">🧙‍♂️️</span>
             <div>
               <div id="home-avatar-name" style="font-weight: bold; font-size: 14px;">魔法使い</div>
               <div id="home-avatar-skill" style="font-size: 11px; color: var(--primary); font-weight: bold;">【高速詠唱】変化技の優先度を＋１する。</div>
@@ -237,7 +237,7 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button onclick="showScreen('screen-training-ready')">⏱️ トレーニング (30秒)</button>
+        <button onclick="showScreen('screen-training-ready')">⏱️️ トレーニング (30秒)</button>
         <button onclick="showScreen('screen-status')">⚙️ ステータス強化</button>
         <button onclick="showScreen('screen-skills')">📖 技デッキ編集</button>
         <button onclick="showScreen('screen-battle')">⚔️ 対戦モード</button>
@@ -489,7 +489,7 @@
           <div id="p-box" class="char-box">
             <div id="p-pop" class="pop-text"></div>
             <div id="p-fx" class="fx-overlay"></div>
-            <div id="p-icon" class="char-icon">🧙‍♂️</div>
+            <div id="p-icon" class="char-icon">🧙‍♂️️</div>
             <strong id="p-display-name">勇者</strong>
             <div class="hp-bar"><div id="p-hp-bar" class="hp-fill" style="width:100%;"></div></div>
             <span id="p-hp-text">50/50</span>
@@ -553,7 +553,7 @@
 
   // --- キャラクター＆固有パッシブ能力定義 ---
   const AVATAR_DATA = {
-    '🧙‍♂️': { name: '魔法使い', abilityName: '高速詠唱', desc: '変化技の優先度を＋１する。' },
+    '🧙‍♂️️': { name: '魔法使い', abilityName: '高速詠唱', desc: '変化技の優先度を＋１する。' },
     '🥷': { name: '忍者', abilityName: '神出鬼没', desc: '毎ターン20％の確率で相手の技を回避する。' },
     '😈': { name: '悪魔', abilityName: '悪魔の契り', desc: '解呪の制限時間が1秒になる。バトル開始時相手を「のろい」にする。' },
     '🤖': { name: 'ロボット', abilityName: '堅牢装甲', desc: 'HPが75%以上の時、必ず１耐える。' },
@@ -791,6 +791,7 @@
       selectedSkills: selectedSkills,
       monthlyHistory: monthlyHistory,
       lastResetMonth: lastResetMonth,
+      updatedMonth: getCurrentYearMonth(), // ← アプローチ2: 今月更新データであることを判定するためのプロパティを追加
       stats: {
         maxHp: player.maxHp,
         atk: player.atk,
@@ -947,11 +948,14 @@
       });
   }
 
+  // --- アプローチ2：ランキング取得時に「当月データのみ」を表示する処理 ---
   function loadRanking() {
     const container = document.getElementById('ranking-list-container');
     container.innerHTML = '<p style="color:#64748b;">読み込み中...</p>';
 
-    db.ref('users').orderByChild('level').limitToLast(10).once('value')
+    const currentMonth = getCurrentYearMonth();
+
+    db.ref('users').once('value')
       .then(snapshot => {
         if (!snapshot.exists()) {
           container.innerHTML = '<p style="color:#64748b;">まだランキングデータがありません。<br>クラウド連携すると登録されます！</p>';
@@ -960,13 +964,26 @@
 
         const users = [];
         snapshot.forEach(child => {
-          users.push(child.val());
+          const userData = child.val();
+          // 今月更新されたデータ（updatedMonth === currentMonth）のみを抽出
+          if (userData.updatedMonth === currentMonth) {
+            users.push(userData);
+          }
         });
 
-        users.reverse();
+        if (users.length === 0) {
+          container.innerHTML = '<p style="color:#64748b;">今月のランキングデータはまだありません。</p>';
+          return;
+        }
+
+        // レベルが高い順に並び替え（ソート）
+        users.sort((a, b) => (b.level || 0) - (a.level || 0));
+
+        // 上位10名を取得
+        const topUsers = users.slice(0, 10);
 
         container.innerHTML = '';
-        users.forEach((userData, index) => {
+        topUsers.forEach((userData, index) => {
           const rank = index + 1;
           const rankClass = rank <= 3 ? `top-${rank}` : '';
           const name = userData.playerName || '勇者';
@@ -1001,7 +1018,7 @@
       const el = document.createElement('div');
       el.className = 'ranking-item';
       el.innerHTML = `
-        <div style="font-weight: bold; width: 90px; color: #475569;">🗓️ ${item.month}</div>
+        <div style="font-weight: bold; width: 90px; color: #475569;">🗓️️ ${item.month}</div>
         <div class="ranking-name" style="font-size: 13px; color: #64748b;">対人: ${item.wins}勝 ${item.losses}敗 ${item.draws}分</div>
         <div class="ranking-lvl">最終 Lv.${item.level}</div>
       `;
@@ -1945,7 +1962,7 @@
     let basePrio = skill ? skill.priority : 0;
 
     // 🧙‍♂️ 魔法使い【高速詠唱】: 変化技の優先度を＋1する
-    if (unit && unit.avatar === '🧙‍♂️' && skill && skill.type === '変化') {
+    if (unit && unit.avatar === '🧙‍♂️️' && skill && skill.type === '変化') {
       basePrio += 1;
     }
     return basePrio;
