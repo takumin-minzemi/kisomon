@@ -738,7 +738,26 @@
     }
   }
 
-  function checkAndResetMonthlyData() {
+  async function calculateFinalRank(finalLevel) {
+    try {
+      const snapshot = await db.ref('users').once('value');
+      if (!snapshot.exists()) return null;
+      let higherCount = 0;
+      snapshot.forEach(child => {
+        const userData = child.val();
+        const lvl = userData.level !== undefined ? userData.level : 0;
+        if (lvl > finalLevel) {
+          higherCount++;
+        }
+      });
+      return higherCount + 1;
+    } catch (e) {
+      console.error("順位計算エラー:", e);
+      return null;
+    }
+  }
+
+  async function checkAndResetMonthlyData() {
     const currentMonth = getCurrentYearMonth();
     if (!lastResetMonth) {
       lastResetMonth = currentMonth;
@@ -752,9 +771,12 @@
                          (player.spd - BASE_STATS.spd);
       const finalLevel = usedPoints + points;
 
+      const finalRank = await calculateFinalRank(finalLevel);
+
       monthlyHistory.unshift({
         month: lastResetMonth,
         level: finalLevel,
+        rank: finalRank,
         wins: pvpWins,
         losses: pvpLosses,
         draws: pvpDraws
@@ -770,49 +792,51 @@
       player.def = BASE_STATS.def;
       player.spd = BASE_STATS.spd;
 
+      const prevMonthStr = lastResetMonth;
       lastResetMonth = currentMonth;
       
-      alert(`🗓️ 月が変わったためレベルとポイントがリセットされました！\n前月(${monthlyHistory[0].month})の最終レベル: Lv.${finalLevel}`);
+      const rankMsg = finalRank ? ` (最終 ${finalRank}位)` : '';
+      alert(`🗓️ 月が変わったためレベルとポイントがリセットされました！\n前月(${prevMonthStr})の最終記録: Lv.${finalLevel}${rankMsg}`);
     }
   }
 
   function saveData() {
-    checkAndResetMonthlyData();
+    checkAndResetMonthlyData().then(() => {
+      const usedPoints = (player.maxHp - BASE_STATS.hp) + 
+                         (player.atk - BASE_STATS.atk) + 
+                         (player.def - BASE_STATS.def) + 
+                         (player.spd - BASE_STATS.spd);
+      const calculatedLevel = usedPoints + points;
 
-    const usedPoints = (player.maxHp - BASE_STATS.hp) + 
-                       (player.atk - BASE_STATS.atk) + 
-                       (player.def - BASE_STATS.def) + 
-                       (player.spd - BASE_STATS.spd);
-    const calculatedLevel = usedPoints + points;
+      const saveDataObj = {
+        playerName: playerName,
+        playerAvatar: playerAvatar,
+        level: calculatedLevel,
+        points: points,
+        pvpWins: pvpWins,
+        pvpLosses: pvpLosses,
+        pvpDraws: pvpDraws,
+        selectedSkills: selectedSkills,
+        monthlyHistory: monthlyHistory,
+        lastResetMonth: lastResetMonth,
+        stats: {
+          maxHp: player.maxHp,
+          atk: player.atk,
+          def: player.def,
+          spd: player.spd
+        },
+        updatedAt: Date.now()
+      };
 
-    const saveDataObj = {
-      playerName: playerName,
-      playerAvatar: playerAvatar,
-      level: calculatedLevel,
-      points: points,
-      pvpWins: pvpWins,
-      pvpLosses: pvpLosses,
-      pvpDraws: pvpDraws,
-      selectedSkills: selectedSkills,
-      monthlyHistory: monthlyHistory,
-      lastResetMonth: lastResetMonth,
-      stats: {
-        maxHp: player.maxHp,
-        atk: player.atk,
-        def: player.def,
-        spd: player.spd
-      },
-      updatedAt: Date.now()
-    };
+      localStorage.setItem('kisomon_local_save', JSON.stringify(saveDataObj));
 
-    localStorage.setItem('kisomon_local_save', JSON.stringify(saveDataObj));
-
-    const cloudId = localStorage.getItem('kisomon_cloud_id');
-    if (cloudId) {
-      db.ref('users/' + cloudId).set(saveDataObj).catch(err => {
-        console.error("クラウド自動保存エラー:", err);
-      });
-    }
+      const cloudId = localStorage.getItem('kisomon_cloud_id');
+      if (cloudId) {
+        db.ref('users/' + cloudId).set(saveDataObj).catch(err => {
+          console.error("クラウド自動保存エラー:", err);
+        });
+      }
+    });
   }
 
   function loadLocal() {
@@ -843,7 +867,7 @@
         document.getElementById('player-name-input').value = playerName;
         selectAvatar(playerAvatar, false);
 
-        checkAndResetMonthlyData();
+        checkAndResetMonthlyData().then(() => saveData());
       } catch(e) {
         console.error("Local save load failed", e);
       }
@@ -908,7 +932,7 @@
     }
 
     db.ref('users/' + userId).once('value')
-      .then(snapshot => {
+      .then(async snapshot => {
         if (!snapshot.exists()) {
           msg.style.color = '#ef4444';
           msg.innerText = '❌ 指定したIDのデータが見つかりません';
@@ -939,7 +963,7 @@
         selectAvatar(playerAvatar, false);
 
         localStorage.setItem('kisomon_cloud_id', userId);
-        checkAndResetMonthlyData();
+        await checkAndResetMonthlyData();
         saveData();
         updateUI();
 
@@ -1005,9 +1029,13 @@
     monthlyHistory.forEach(item => {
       const el = document.createElement('div');
       el.className = 'ranking-item';
+      const rankText = item.rank ? `🏆 ${item.rank}位` : '順位記録なし';
       el.innerHTML = `
-        <div style="font-weight: bold; width: 90px; color: #475569;">🗓️ ${item.month}</div>
-        <div class="ranking-name" style="font-size: 13px; color: #64748b;">対人: ${item.wins}勝 ${item.losses}敗 ${item.draws}分</div>
+        <div style="font-weight: bold; width: 85px; color: #475569;">🗓️ ${item.month}</div>
+        <div class="ranking-name" style="font-size: 13px; color: #64748b;">
+          ${rankText}<br>
+          <span style="font-size: 11px;">対人: ${item.wins}勝 ${item.losses}敗 ${item.draws}分</span>
+        </div>
         <div class="ranking-lvl">最終 Lv.${item.level}</div>
       `;
       container.appendChild(el);
@@ -1870,7 +1898,7 @@
       }
 
       if (inBattle && data.turnResult && data.turnResult.turn === turnCount) {
-　　　　applyTurnResult(data.turnResult);
+        applyTurnResult(data.turnResult);
       }
 
       if (inBattle && data.surrender) {
@@ -1994,9 +2022,8 @@
       playerFirst = pSpd >= eSpd;
     }
 
-    // 🐲 行動実行ヘルパー関数（修正：主語を正しく設定）
+    // 🐲 行動実行ヘルパー関数
     const executePlayerAction = () => {
-      // 相手（enemy）がドラゴンなら自分が10%で行動不能
       if (enemy.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
       } else {
@@ -2005,7 +2032,6 @@
     };
 
     const executeEnemyAction = () => {
-      // 自分（player）がドラゴンなら相手が10%で行動不能
       if (player.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を発動！ ${enemy.name} は威圧されて技が出せない！`);
       } else {
@@ -2076,7 +2102,7 @@
       playerFirst = pSpd >= eSpd;
     }
 
-    // 🐲 行動実行ヘルパー関数（修正：主語を正しく設定）
+    // 🐲 行動実行ヘルパー関数
     const executePlayerAction = () => {
       if (enemy.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
