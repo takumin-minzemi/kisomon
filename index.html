@@ -956,7 +956,7 @@
     const container = document.getElementById('ranking-list-container');
     container.innerHTML = '<p style="color:#64748b;">読み込み中...</p>';
 
-    db.ref('users').orderByChild('level').limitToLast(10).once('value')
+    db.ref('users').orderByChild('level').limitToLast(30).once('value')
       .then(snapshot => {
         if (!snapshot.exists()) {
           container.innerHTML = '<p style="color:#64748b;">まだランキングデータがありません。<br>クラウド連携すると登録されます！</p>';
