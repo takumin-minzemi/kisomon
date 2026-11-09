@@ -1996,8 +1996,8 @@
 
     // 🐲 行動実行ヘルパー関数（修正：主語を正しく設定）
     const executePlayerAction = () => {
-      // 相手（enemy）がドラゴンなら自分が20%で行動不能
-      if (enemy.avatar === '🐲' && Math.random() < 0.20) {
+      // 相手（enemy）がドラゴンなら自分が10%で行動不能
+      if (enemy.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
       } else {
         processAction(player, enemy, pCmd, playerName, 'player');
@@ -2005,8 +2005,8 @@
     };
 
     const executeEnemyAction = () => {
-      // 自分（player）がドラゴンなら相手が20%で行動不能
-      if (player.avatar === '🐲' && Math.random() < 0.20) {
+      // 自分（player）がドラゴンなら相手が10%で行動不能
+      if (player.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を発動！ ${enemy.name} は威圧されて技が出せない！`);
       } else {
         processAction(enemy, player, cpuCmd, enemy.name, 'enemy');
@@ -2078,7 +2078,7 @@
 
     // 🐲 行動実行ヘルパー関数（修正：主語を正しく設定）
     const executePlayerAction = () => {
-      if (enemy.avatar === '🐲' && Math.random() < 0.20) {
+      if (enemy.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を受けた！ ${playerName} は威圧されて技が出せない！`);
       } else {
         processAction(player, enemy, myCmd, playerName, 'player');
@@ -2086,7 +2086,7 @@
     };
 
     const executeEnemyAction = () => {
-      if (player.avatar === '🐲' && Math.random() < 0.20) {
+      if (player.avatar === '🐲' && Math.random() < 0.10) {
         logMsg(`🐲 【竜の威圧】を発動！ ${enemy.name} は威圧されて技が出せない！`);
       } else {
         processAction(enemy, player, oppCmd, enemy.name, 'enemy');
